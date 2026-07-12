@@ -4,6 +4,7 @@ import viteLogo from './assets/vite.svg'
 import heroImg from './assets/hero.png'
 import './App.css'
 
+console.log("HELLO THIS IS APP.JSX CHANGED INSIDE CONTAINER?")
 function App() {
   const [count, setCount] = useState(0)
 
