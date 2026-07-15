@@ -1,3 +1,9 @@
+import courseCareerCommunicationImage from '../assets/course-career-communication.webp';
+import courseDataAnalysisImage from '../assets/course-data-analysis.webp';
+import courseHiddenDraftImage from '../assets/course-hidden-draft.webp';
+import courseProductThinkingImage from '../assets/course-product-thinking.webp';
+import courseReactFoundationsImage from '../assets/course-react-foundations.webp';
+
 export interface Course {
   id: string;
   slug: string;
@@ -15,6 +21,7 @@ export interface Course {
   enrolledCount: number;
   priceSar: number;
   thumbnailTone: 'red' | 'green' | 'gold' | 'ink';
+  thumbnailImage: string;
   published: boolean;
   featured: boolean;
 }
@@ -38,6 +45,7 @@ export const courses: Course[] = [
     enrolledCount: 1180,
     priceSar: 349,
     thumbnailTone: 'red',
+    thumbnailImage: courseReactFoundationsImage,
     published: true,
     featured: true,
   },
@@ -59,6 +67,7 @@ export const courses: Course[] = [
     enrolledCount: 860,
     priceSar: 299,
     thumbnailTone: 'green',
+    thumbnailImage: courseDataAnalysisImage,
     published: true,
     featured: true,
   },
@@ -80,6 +89,7 @@ export const courses: Course[] = [
     enrolledCount: 640,
     priceSar: 249,
     thumbnailTone: 'gold',
+    thumbnailImage: courseCareerCommunicationImage,
     published: true,
     featured: true,
   },
@@ -101,6 +111,7 @@ export const courses: Course[] = [
     enrolledCount: 510,
     priceSar: 319,
     thumbnailTone: 'ink',
+    thumbnailImage: courseProductThinkingImage,
     published: true,
     featured: true,
   },
@@ -121,6 +132,7 @@ export const courses: Course[] = [
     enrolledCount: 0,
     priceSar: 0,
     thumbnailTone: 'red',
+    thumbnailImage: courseHiddenDraftImage,
     published: false,
     featured: false,
   },

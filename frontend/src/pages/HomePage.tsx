@@ -70,6 +70,18 @@ const thumbnailClasses: Record<Course['thumbnailTone'], string> = {
   ink: 'from-ink via-[#354052] to-[#a9b3c1]',
 };
 
+const categoryBadgeClasses: Record<string, string> = {
+  Frontend: '!bg-[#fff1f2] !text-brand-700 !ring-brand-200',
+  Data: '!bg-[#e7f6f1] !text-[#236455] !ring-[#9fd4c1]',
+  Career: '!bg-[#fff6dc] !text-[#8a5a12] !ring-[#f2cf70]',
+  Product: '!bg-[#eef2ff] !text-[#34418a] !ring-[#b9c4ff]',
+  Draft: '!bg-canvas-warm !text-ink-muted !ring-line-strong',
+};
+
+function getCategoryBadgeClass(category: string) {
+  return categoryBadgeClasses[category] ?? '!bg-white !text-ink !ring-white/50';
+}
+
 function scrollToTopCourses() {
   document.getElementById('top-courses')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -84,10 +96,20 @@ function CourseCard({ course, onPreview }: { course: Course; onPreview: (course:
       className="group flex h-full flex-col overflow-hidden rounded-card border border-line bg-canvas shadow-card transition duration-300 hover:-translate-y-1 hover:shadow-lift"
       data-animate-item
     >
-      <div className={cn('relative min-h-40 bg-linear-to-br p-5 text-white', thumbnailClasses[course.thumbnailTone])}>
-        <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(120deg,transparent_0_38%,rgba(255,255,255,.45)_38%_40%,transparent_40%_100%)]" />
+      <div className={cn('relative min-h-44 overflow-hidden bg-linear-to-br p-5 text-white', thumbnailClasses[course.thumbnailTone])}>
+        <img
+          className="absolute inset-0 h-full w-full object-cover transition duration-500 ease-out group-hover:scale-105"
+          src={course.thumbnailImage}
+          alt=""
+          width="900"
+          height="540"
+          loading="lazy"
+          aria-hidden="true"
+        />
+        <div className="absolute inset-0 bg-linear-to-t from-ink/88 via-ink/34 to-ink/10" />
+        <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(120deg,transparent_0_38%,rgba(255,255,255,.55)_38%_40%,transparent_40%_100%)]" />
         <div className="relative flex h-full min-h-28 flex-col justify-between">
-          <Badge variant="outline" className="w-fit border-white/40 bg-white/18 text-white ring-white/35">
+          <Badge variant="outline" className={cn('w-fit shadow-card', getCategoryBadgeClass(course.category))}>
             {course.category}
           </Badge>
           <div className="mt-8 flex items-end justify-between gap-4">
@@ -418,15 +440,12 @@ export function HomePage() {
                 <p className="eyebrow text-brand-300">Next step</p>
                 <h2 className="mt-3 max-w-3xl font-display text-heading-lg text-white">Ready to choose your next skill?</h2>
                 <p className="mt-4 max-w-reading text-white/70">
-                  Tell the team what you want to learn, and they can point you toward the best course path when enrollment opens.
+                  Start browsing our course catalog to find the perfect path for your goals.
                 </p>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row lg:justify-end" data-animate-item>
-                <Button size="lg" onClick={() => navigateTo('/contact')}>
-                  Talk to our team
-                </Button>
-                <Button size="lg" variant="outline" onClick={() => navigateTo('/about')}>
-                  See how the platform works
+                <Button size="lg" onClick={() => navigateTo('/courses')}>
+                  Browse courses
                 </Button>
               </div>
             </div>
@@ -434,25 +453,88 @@ export function HomePage() {
         </section>
       </main>
 
-      <footer className="border-t border-line bg-canvas py-10">
-        <div className="page-container grid gap-8 md:grid-cols-[1fr_auto] md:items-start">
-          <div>
-            <p className="font-display text-xl font-black">QaderAcademy</p>
-            <p className="mt-2 max-w-md text-sm leading-6 text-ink-soft">
-              Practical learning paths for learners preparing for their next professional step.
-            </p>
+      <footer className="bg-canvas-dark pt-14 text-white" id='contact'>
+        <div className="page-container">
+          <div className="grid gap-10 border-b border-white/12 pb-10 md:grid-cols-2 lg:grid-cols-[1.25fr_0.8fr_0.8fr_1fr]">
+            <div>
+              <a className="font-display text-2xl font-black text-white" href="/" aria-label="QaderAcademy home">
+                QaderAcademy
+              </a>
+              <p className="mt-4 max-w-sm text-sm leading-7 text-white/68">
+                Practical online learning paths for learners preparing for career-relevant skills, assessments, and future certificates.
+              </p>
+              <div className="mt-6 flex gap-3" aria-label="Social links">
+                {['in', 'x', 'yt'].map((item) => (
+                  <a
+                    className="grid size-10 place-items-center rounded-full border border-white/18 text-xs font-black uppercase text-white/72 transition hover:border-brand-300 hover:bg-brand-600 hover:text-white"
+                    href="#"
+                    aria-label={`${item} placeholder link`}
+                    key={item}
+                  >
+                    {item}
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-sm font-black uppercase tracking-[0.14em] text-white">Learn</h2>
+              <nav className="mt-4 grid gap-3 text-sm font-bold text-white/68" aria-label="Course categories">
+                <a className="transition hover:text-white" href="#top-courses">
+                  Featured courses
+                </a>
+                <a className="transition hover:text-white" href="#top-courses">
+                  Frontend development
+                </a>
+                <a className="transition hover:text-white" href="#top-courses">
+                  Data analysis
+                </a>
+                <a className="transition hover:text-white" href="#top-courses">
+                  Career communication
+                </a>
+              </nav>
+            </div>
+
+            <div>
+              <h2 className="text-sm font-black uppercase tracking-[0.14em] text-white">Company</h2>
+              <nav className="mt-4 grid gap-3 text-sm font-bold text-white/68" aria-label="Company navigation">
+                <a className="transition hover:text-white" href="/about">
+                  About
+                </a>
+                <a className="transition hover:text-white" href="#features">
+                  Platform model
+                </a>
+                <a className="transition hover:text-white" href="#testimonials">
+                  Testimonials
+                </a>
+                <a className="transition hover:text-white" href="/contact">
+                  Contact
+                </a>
+              </nav>
+            </div>
+
+            <div>
+              <h2 className="text-sm font-black uppercase tracking-[0.14em] text-white">Contact</h2>
+              <div className="mt-4 grid gap-3 text-sm text-white/68">
+                <p>Riyadh, Saudi Arabia</p>
+                <a className="font-bold transition hover:text-white" href="mailto:hello@qaderacademy.example">
+                  hello@qaderacademy.example
+                </a>
+                <a className="font-bold transition hover:text-white" href="tel:+966500000000">
+                  +966 50 000 0000
+                </a>
+                <p className="text-xs leading-5 text-white/48">Contact details are placeholders for this frontend release.</p>
+              </div>
+            </div>
           </div>
-          <div className="grid gap-2 text-sm font-bold text-ink-soft sm:grid-cols-2 md:text-right">
-            <a className="hover:text-brand-700" href="#top-courses">
-              Course categories
-            </a>
-            <a className="hover:text-brand-700" href="/contact">
-              Contact details
-            </a>
-            <span aria-disabled="true">Privacy coming soon</span>
-            <span aria-disabled="true">Terms coming soon</span>
+
+          <div className="flex flex-col gap-4 py-6 text-sm text-white/56 md:flex-row md:items-center md:justify-between">
+            <p>Copyright {currentYear} QaderAcademy. All rights reserved.</p>
+            <div className="flex flex-wrap gap-4">
+              <span aria-disabled="true">Privacy policy coming soon</span>
+              <span aria-disabled="true">Terms of use coming soon</span>
+            </div>
           </div>
-          <p className="text-sm text-ink-muted md:col-span-2">Copyright {currentYear} QaderAcademy. All rights reserved.</p>
         </div>
       </footer>
 
@@ -464,11 +546,15 @@ export function HomePage() {
       >
         {selectedCourse ? (
           <div className="grid gap-6 md:grid-cols-[0.8fr_1fr]">
-            <div className={cn('min-h-56 rounded-card bg-linear-to-br p-5 text-white', thumbnailClasses[selectedCourse.thumbnailTone])}>
-              <Badge variant="outline" className="bg-white/18 text-white ring-white/35">
-                {selectedCourse.category}
-              </Badge>
-              <p className="mt-16 font-display text-3xl font-black leading-tight">{selectedCourse.title}</p>
+            <div className={cn('relative min-h-56 overflow-hidden rounded-card bg-linear-to-br p-5 text-white', thumbnailClasses[selectedCourse.thumbnailTone])}>
+              <img className="absolute inset-0 h-full w-full object-cover" src={selectedCourse.thumbnailImage} alt="" width="900" height="540" aria-hidden="true" />
+              <div className="absolute inset-0 bg-linear-to-t from-ink/88 via-ink/36 to-ink/8" />
+              <div className="relative">
+                <Badge variant="outline" className={cn('shadow-card', getCategoryBadgeClass(selectedCourse.category))}>
+                  {selectedCourse.category}
+                </Badge>
+                <p className="mt-16 font-display text-3xl font-black leading-tight">{selectedCourse.title}</p>
+              </div>
             </div>
             <div>
               <p className="leading-7 text-ink-soft">{selectedCourse.shortDescription}</p>
