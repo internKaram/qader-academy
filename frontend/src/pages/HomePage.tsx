@@ -176,26 +176,37 @@ export function HomePage() {
 
       const sections = Array.from(scope.querySelectorAll<HTMLElement>('[data-animate-section]'));
       sections.forEach((section) => {
-        const items = section.querySelectorAll('[data-animate-item]');
-        gsap.from(items, {
-          y: 34,
-          opacity: 0,
-          duration: 0.75,
-          stagger: 0.1,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: section,
-            start: 'top 78%',
+        const items = Array.from(section.querySelectorAll<HTMLElement>('[data-animate-item]'));
+
+        ScrollTrigger.create({
+          trigger: section,
+          start: 'top 78%',
+          once: true,
+          onEnter: () => {
+            gsap.fromTo(
+              items,
+              { y: 34, autoAlpha: 0 },
+              {
+                y: 0,
+                autoAlpha: 1,
+                duration: 0.75,
+                stagger: 0.1,
+                ease: 'power3.out',
+                clearProps: 'transform,opacity,visibility',
+              },
+            );
           },
         });
       });
+
+      window.requestAnimationFrame(() => ScrollTrigger.refresh());
     }, scope);
 
     return () => context.revert();
   }, []);
 
   return (
-    <div ref={pageRef} className="min-h-screen overflow-hidden bg-canvas-soft text-ink">
+    <div ref={pageRef} className="min-h-screen overflow-x-hidden bg-canvas-soft text-ink">
       <header className="fixed inset-x-0 top-0 z-40 border-b border-white/30 bg-canvas-soft/82 backdrop-blur-xl">
         <div className="page-container flex min-h-16 items-center justify-between gap-6">
           <a className="font-display text-xl font-black tracking-normal text-ink" href="/" aria-label="QaderAcademy home">
@@ -250,7 +261,7 @@ export function HomePage() {
               </div>
             </div>
 
-            <div className="relative min-h-[34rem]" data-hero-panel>
+            <div className="relative min-h-[34rem]" data-hero-panel> {/* THIS SECTION IS BROKEN */}
               <div className="absolute left-0 top-8 z-10 w-56 rounded-card border border-line bg-canvas p-4 shadow-lift" data-float-card>
                 <p className="text-xs font-black uppercase tracking-[0.14em] text-brand-700">Path checkpoint</p>
                 <p className="mt-2 text-sm leading-6 text-ink-soft">Select a course, complete ordered lessons, and track what changed.</p>
