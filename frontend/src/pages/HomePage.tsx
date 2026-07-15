@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import heroImage from '../assets/hero.png';
+import aboutTeacherImage from '../assets/about-teacher.webp';
+import heroLearnersImage from '../assets/hero-learners.webp';
 import { Badge, Button, Modal } from '../components/ui';
 import { courses, type Course } from '../data/courses';
 import { cn } from '../lib/cn';
@@ -207,20 +208,20 @@ export function HomePage() {
 
   return (
     <div ref={pageRef} className="min-h-screen overflow-x-hidden bg-canvas-soft text-ink">
-      <header className="fixed inset-x-0 top-0 z-40 border-b border-white/30 bg-canvas-soft/82 backdrop-blur-xl">
-        <div className="page-container flex min-h-16 items-center justify-between gap-6">
+      <header className="fixed inset-x-0 top-0 z-40 bg-white/90 shadow-[0_10px_30px_rgb(18_24_38_/_0.06)] backdrop-blur-xl">
+        <div className="page-container flex min-h-18 items-center justify-between gap-6">
           <a className="font-display text-xl font-black tracking-normal text-ink" href="/" aria-label="QaderAcademy home">
             QaderAcademy
           </a>
           <nav className="hidden items-center gap-6 text-sm font-bold text-ink-soft md:flex" aria-label="Primary navigation">
             <a className="transition hover:text-brand-700" href="#features">
-              Features
+              About
             </a>
             <a className="transition hover:text-brand-700" href="#top-courses">
               Courses
             </a>
-            <a className="transition hover:text-brand-700" href="#testimonials">
-              Stories
+            <a className="transition hover:text-brand-700" href="#contact">
+              Contact
             </a>
           </nav>
           <Button size="sm" onClick={() => navigateTo('/login')}>
@@ -230,97 +231,126 @@ export function HomePage() {
       </header>
 
       <main>
-        <section className="relative min-h-[calc(100vh-1px)] bg-canvas-warm pt-28 bottom-4rem">
-          <div className="page-container relative grid gap-12 pb-16 lg:grid-cols-[2fr_1fr] lg:items-center lg:pb-24">
-            <div className="max-w-3xl">
-              <p className="eyebrow" data-hero-kicker>
+        <section className="relative overflow-hidden bg-[#fff7f3] pt-28">
+          <div className="absolute -left-24 top-18 size-64 rounded-full bg-[#fee8df]" aria-hidden="true" />
+          <div className="absolute right-8 top-24 grid grid-cols-4 gap-2 opacity-40" aria-hidden="true">
+            {Array.from({ length: 16 }).map((_, index) => (
+              <span className="size-1.5 rounded-full bg-brand-400" key={index} />
+            ))}
+          </div>
+          <div className="absolute bottom-18 left-1/2 h-24 w-24 rounded-full border-[18px] border-[#e9f7f1]" aria-hidden="true" />
+
+          <div className="page-container relative grid gap-12 pb-20 lg:grid-cols-[minmax(0,0.92fr)_minmax(28rem,1.08fr)] lg:items-center lg:pb-28">
+            <div className="max-w-2xl">
+              <p className="text-sm font-black uppercase tracking-[0.14em] text-brand-600" data-hero-kicker>
                 Practical learning for real progress
               </p>
-              <h1 className="mt-5 font-display text-[clamp(3rem,8vw,6.8rem)] font-black leading-[0.9] tracking-normal text-ink" data-hero-title>
+              <h1 className="mt-5 font-display text-[clamp(2.25rem,7vw,5.1rem)] font-black leading-[0.95] tracking-normal text-ink" data-hero-title>
                 Build skills that move your future forward.
               </h1>
-              <p className="mt-6 max-w-reading text-lead text-ink-soft" data-hero-copy>
+              <p className="mt-6 max-w-reading text-base leading-8 text-ink-soft" data-hero-copy>
                 QaderAcademy helps learners choose structured, career-relevant courses, practice through guided lessons, and prepare for measurable progress.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row" data-hero-action>
                 <Button size="lg" onClick={scrollToTopCourses}>
-                  Explore top courses
+                  Start Learning
                 </Button>
-                <Button size="lg" variant="outline" onClick={() => navigateTo('/about')}>
-                  Learn about QaderAcademy
+                <Button size="lg" variant="ghost" onClick={() => navigateTo('/about')}>
+                  Learn more
                 </Button>
               </div>
 
-              <div className="mt-10 grid gap-3 sm:grid-cols-3" aria-label="Sample platform metrics">
+              <div className="mt-10 grid gap-4 sm:grid-cols-3" aria-label="Sample platform metrics">
                 {stats.map((stat) => (
-                  <div className="rounded-card border border-line bg-white/70 p-4 shadow-card" data-stat key={stat.label}>
-                    <p className="font-display text-3xl font-black text-brand-700">{stat.value}</p>
+                  <div className="rounded-card bg-white p-4 shadow-card" data-stat key={stat.label}>
+                    <p className="font-display text-3xl font-black text-brand-600">{stat.value}</p>
                     <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-ink-muted">{stat.label}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="relative min-h-[34rem]" data-hero-panel> {/* THIS SECTION IS BROKEN */}
-              <div className="absolute left-0 top-8 z-10 w-56 rounded-card border border-line bg-canvas p-4 shadow-lift" data-float-card>
-                <p className="text-xs font-black uppercase tracking-[0.14em] text-brand-700">Path checkpoint</p>
-                <p className="mt-2 text-sm leading-6 text-ink-soft">Select a course, complete ordered lessons, and track what changed.</p>
-              </div>
-
-              <div className="absolute right-0 top-0 w-[72%] rounded-panel border border-line bg-canvas p-6 shadow-lift">
-                <div className="flex items-center justify-between">
-                  <Badge variant="brand">Featured plan</Badge>
-                  <span className="text-xs font-bold text-ink-muted">Week 01</span>
-                </div>
-                <img className="mx-auto mt-7 w-44 opacity-95" src={heroImage} alt="" aria-hidden="true" />
-                <div className="mt-7 space-y-3">
-                  {['Choose the skill', 'Follow the lesson order', 'Prepare for assessment'].map((item) => (
-                    <div className="flex items-center gap-3 rounded-control bg-canvas-warm px-3 py-2" key={item}>
-                      <span className="size-2 rounded-full bg-brand-600" aria-hidden="true" />
-                      <span className="text-sm font-bold text-ink-soft">{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="absolute bottom-0 left-10 w-64 rounded-card border border-line bg-[#eef3eb] p-5 shadow-card" data-float-card>
-                <p className="font-display text-2xl font-black text-[#2f6f62]">6h 15m</p>
-                <p className="mt-1 text-sm font-bold text-ink-soft">Sample course duration</p>
-              </div>
-
-              <svg className="absolute inset-0 h-full w-full overflow-visible" viewBox="0 0 520 520" fill="none" aria-hidden="true">
+            <div className="relative isolate min-h-[36rem]" data-hero-panel>
+              <div className="absolute left-1/2 top-8 size-[28rem] -translate-x-1/2 rounded-full bg-[#59c3a5]" />
+              <div className="absolute left-1/2 top-2 size-[22rem] -translate-x-1/2 rounded-full border-[18px] border-white/70" />
+              <div className="absolute left-[11%] top-24 size-16 rounded-full bg-[#ffd9a8]" data-float-card />
+              <div className="absolute right-[6%] top-18 size-9 rounded-full bg-brand-300" data-float-card />
+              <svg className="pointer-events-none absolute inset-0 z-10 h-full w-full" viewBox="0 0 620 520" fill="none" aria-hidden="true">
                 <path
                   ref={routePathRef}
-                  d="M58 132 C160 72 220 150 282 108 C374 46 470 112 430 204 C398 278 246 224 228 318 C210 418 340 456 444 386"
+                  d="M62 390 C116 330 98 250 172 236 C250 220 276 310 350 282 C428 252 446 150 550 126"
                   stroke="#d7263d"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M500 96 C530 74 558 78 580 104"
+                  stroke="#f2b45b"
                   strokeWidth="5"
                   strokeLinecap="round"
                 />
               </svg>
+
+              <div className="absolute left-1/2 top-10 z-20 w-[min(90%,27rem)] -translate-x-1/2 overflow-hidden rounded-[3rem] border-[10px] border-white bg-white shadow-lift">
+                <img
+                  className="aspect-[4/5] h-full w-full object-cover object-center"
+                  src={heroLearnersImage}
+                  alt="Two adult learners studying together with a laptop"
+                />
+              </div>
+
+              <div className="absolute bottom-20 left-4 z-30 rounded-card bg-white p-4 shadow-lift" data-float-card>
+                <p className="font-display text-3xl font-black text-brand-600">25K+</p>
+                <p className="text-sm font-bold text-ink-soft">Sample learners</p>
+              </div>
+
+              <div className="absolute right-0 top-24 z-30 rounded-card bg-white p-4 shadow-card" data-float-card>
+                <Badge variant="success">Live class</Badge>
+                <p className="mt-2 text-sm font-bold text-ink-soft">Guided lessons</p>
+              </div>
             </div>
           </div>
         </section>
 
-        <section id="features" className="section-shell" data-animate-section>
-          <div className="page-container">
-            <div className="max-w-3xl" data-animate-item>
-              <p className="eyebrow">Platform model</p>
-              <h2 className="mt-3 font-display text-heading-lg">Designed around a clear learning journey.</h2>
-              <p className="mt-4 body-copy">
-                The first public release presents the learning model, course catalog, and contact path while future enrollment features are prepared.
-              </p>
+        <section id="features" className="section-shell bg-canvas" data-animate-section>
+          <div className="page-container grid gap-12 lg:grid-cols-[1.0fr_1.0fr] lg:items-center">
+            <div className="relative min-h-[38rem]" data-animate-item>
+              <div className="absolute left-4 top-8 h-[31rem] w-[22rem] overflow-hidden rounded-panel bg-[#e7f6f1] shadow-card">
+                <img
+                  className="h-full w-full object-cover object-[52%_18%]"
+                  src={aboutTeacherImage}
+                  alt="Teacher presenting an online lesson with a tablet"
+                />
+              </div>
+              <div className="absolute bottom-12 right-10 w-60 rounded-card bg-white p-4 shadow-lift">
+                <div className="flex items-center gap-3">
+                  <span className="grid size-12 place-items-center rounded-full bg-brand-50 font-black text-brand-600">4.8</span>
+                  <div>
+                    <p className="font-bold text-ink">Trusted lessons</p>
+                    <p className="text-sm text-ink-muted">Sample rating</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {features.map((feature) => (
-                <article className="rounded-card border border-line bg-canvas p-6 shadow-card" data-animate-item key={feature.title}>
-                  <span className="grid size-12 place-items-center rounded-control bg-brand-50 font-display text-lg font-black text-brand-700">
-                    {feature.icon}
-                  </span>
-                  <h3 className="mt-5 font-display text-xl font-extrabold">{feature.title}</h3>
-                  <p className="mt-3 text-sm leading-6 text-ink-soft">{feature.description}</p>
-                </article>
-              ))}
+            <div data-animate-item>
+              <p className="text-sm font-black uppercase tracking-[0.14em] text-brand-600">About QaderAcademy</p>
+              <h2 className="mt-3 font-display text-heading-lg">You can learn anything, anytime, from anywhere.</h2>
+              <p className="mt-5 body-copy">
+                QaderAcademy is built for practical, accessible, career-relevant learning. The platform model connects courses, ordered lessons, assessments, progress, and certificates into one clear journey.
+              </p>
+              <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                {features.map((feature) => (
+                  <article className="rounded-card border border-line bg-canvas-soft p-4" data-animate-item key={feature.title}>
+                    <span className="grid size-9 place-items-center rounded-full bg-brand-600 text-sm font-black text-white">{feature.icon}</span>
+                    <h3 className="mt-4 font-display text-lg font-extrabold">{feature.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-ink-soft">{feature.description}</p>
+                  </article>
+                ))}
+              </div>
+              <Button className="mt-8" onClick={() => navigateTo('/about')}>
+                Learn more
+              </Button>
             </div>
           </div>
         </section>
