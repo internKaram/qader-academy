@@ -123,7 +123,14 @@ const login = async (req, res) => {
   }
 };
 
+const logout = async (req, res) => {
+  // With stateless JWTs, true invalidation happens when the frontend clears localStorage.
+  // This endpoint provides a clean backend response confirming the action.
+  return res.status(200).json({ message: 'Logged out successfully' });
+};
+
 module.exports = {
   register,
-  login
+  login,
+  logout
 };
