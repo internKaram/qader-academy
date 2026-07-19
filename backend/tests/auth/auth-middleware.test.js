@@ -61,7 +61,7 @@ describe('Auth Middleware (AUTH-04)', () => {
       .set('Authorization', `Bearer ${expiredToken}`);
     
     expect(res.statusCode).toBe(401);
-    expect(res.body.message).toBe('Not authorized, token failed or expired');
+    expect(res.body.message).toBe('Not authorized, token expired');
   });
 
   // Test Case 3: Valid token

@@ -33,10 +33,19 @@ const authMiddleware = (req, res, next) => {
 
     next();
   } catch (error) {
-    if (error.message.startsWith('FATAL ERROR')) {
+    if (error.message && error.message.startsWith('FATAL ERROR')) {
       throw error; 
     }
-    return res.status(401).json({ message: 'Not authorized, token failed or expired' });
+    
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'Not authorized, token expired' });
+    }
+    
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: 'Not authorized, token invalid' });
+    }
+
+    return res.status(401).json({ message: 'Not authorized, token failed' });
   }
 };
 
