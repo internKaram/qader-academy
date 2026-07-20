@@ -387,9 +387,9 @@ export function HomePage() {
                   </article>
                 ))}
               </div>
-              <Button className="mt-8" onClick={() => navigateTo('/about')}>
+              {/* <Button className="mt-8" onClick={() => navigateTo('/about')}>
                 Learn more
-              </Button>
+              </Button> */}
             </div>
           </div>
         </section>
