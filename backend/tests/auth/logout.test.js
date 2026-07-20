@@ -1,6 +1,6 @@
 const request = require('supertest');
 const express = require('express');
-const authRoutes = require('../../routes/authRoutes');
+const authRoutes = require('../../routes/auth-routes');
 
 const app = express();
 app.use(express.json());
