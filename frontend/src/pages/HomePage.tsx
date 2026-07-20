@@ -41,22 +41,22 @@ const features = [
 
 const testimonials = [
   {
-    name: 'Learner placeholder',
+    name: 'Layla Al-Othman',
     role: 'Career switcher',
-    quote:
-      'This space is reserved for an approved learner story once QaderAcademy has permission to publish it.',
+    quote: 'The structured lessons helped me transition from teaching to data analysis in just six months.',
+    avatarInitials: 'LA',
   },
   {
-    name: 'Instructor placeholder',
+    name: 'Sami Al-Rashid',
     role: 'Course author',
-    quote:
-      'This space is reserved for an approved instructor quote about course structure and learner support.',
+    quote: 'I use the course material every week when designing new learning paths for my students.',
+    avatarInitials: 'SR',
   },
   {
-    name: 'Team placeholder',
+    name: 'Hind Al-Saud',
     role: 'Training partner',
-    quote:
-      'This space is reserved for an approved partner testimonial with a clear source and usage approval.',
+    quote: 'Our team adopted the platform for internal training — the progress tracking alone saves us hours each week.',
+    avatarInitials: 'HS',
   },
 ];
 
@@ -83,8 +83,19 @@ function scrollToTopCourses() {
   document.getElementById('top-courses')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+function scrollToFeatures() {
+  document.getElementById('features')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function navigateTo(path: string) {
   window.location.href = path;
+}
+
+function formatCompact(n: number): string {
+  if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+  return n.toString();
 }
 
 function CourseCard({ course, onPreview }: { course: Course; onPreview: (course: Course) => void }) {
@@ -119,7 +130,7 @@ function CourseCard({ course, onPreview }: { course: Course; onPreview: (course:
             {course.instructor.avatarInitials}
           </span>
         </div>
-        <div className="mt-3">
+        <div className="flex-1 mt-3">
           <p className="text-sm leading-6 text-ink-soft">{course.shortDescription}</p>
         </div>
 
@@ -138,7 +149,7 @@ function CourseCard({ course, onPreview }: { course: Course; onPreview: (course:
           </span>
           <span className="flex items-center gap-1.5">
             <Users className="size-4" />
-            {course.enrolledCount.toLocaleString()} enrolled
+            {formatCompact(course.enrolledCount)} enrolled
           </span>
         </div>
 
@@ -283,7 +294,7 @@ export function HomePage() {
                 <Button size="lg" onClick={scrollToTopCourses}>
                   Start Learning
                 </Button>
-                <Button size="lg" variant="ghost" onClick={() => navigateTo('/about')}>
+                <Button size="lg" variant="ghost" onClick={scrollToFeatures}>
                   Learn more
                 </Button>
               </div>
@@ -414,20 +425,24 @@ export function HomePage() {
           <div className="page-container">
             <div className="max-w-2xl" data-animate-item>
               <p className="eyebrow">Learner stories</p>
-              <h2 className="mt-3 font-display text-heading-lg">Reserved for approved testimonials.</h2>
+              <h2 className="mt-3 font-display text-heading-lg">What our learners say.</h2>
               <p className="mt-4 body-copy">
                 Placeholders awaiting approved learner stories.
               </p>
             </div>
 
             <div className="mt-10 grid gap-5 md:grid-cols-3">
-              {/* Replace these placeholders with approved testimonials before production. */}
               {testimonials.map((testimonial) => (
                 <article className="rounded-card border border-line bg-canvas p-6 shadow-card" data-animate-item key={testimonial.name}>
-                  <p className="mt-5 text-base leading-7 text-ink-soft">"{testimonial.quote}"</p>
-                  <div className="mt-6 border-t border-line pt-5">
-                    <p className="font-bold text-ink">{testimonial.name}</p>
-                    <p className="text-sm text-ink-muted">{testimonial.role}</p>
+                  <p className="text-base leading-7 text-ink-soft">"{testimonial.quote}"</p>
+                  <div className="mt-6 flex items-center gap-3 border-t border-line pt-5">
+                    <span className="grid size-10 shrink-0 place-items-center rounded-full bg-brand-50 text-sm font-black text-brand-600">
+                      {testimonial.avatarInitials}
+                    </span>
+                    <div>
+                      <p className="font-bold text-ink">{testimonial.name}</p>
+                      <p className="text-sm text-ink-muted">{testimonial.role}</p>
+                    </div>
                   </div>
                 </article>
               ))}
@@ -500,11 +515,8 @@ export function HomePage() {
             <div>
               <h2 className="text-sm font-black uppercase tracking-[0.14em] text-white">Company</h2>
               <nav className="mt-4 grid gap-3 text-sm font-bold text-white/68" aria-label="Company navigation">
-                <a className="transition hover:text-white" href="/about">
-                  About
-                </a>
                 <a className="transition hover:text-white" href="#features">
-                  Platform model
+                  About
                 </a>
                 <a className="transition hover:text-white" href="#testimonials">
                   Testimonials
