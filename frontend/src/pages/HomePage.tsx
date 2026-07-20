@@ -263,7 +263,10 @@ export function HomePage() {
               Contact
             </a>
           </nav>
-          <Button size="sm" onClick={() => navigateTo('/login')}>
+          <Button size="sm" onClick={() => navigateTo('/login')} style={{
+            backgroundColor: '#3b635a',
+            boxShadow: '0 4px 12px rgba(59, 99, 90, 0.3)',
+          }}>
             Sign In
           </Button>
         </div>
