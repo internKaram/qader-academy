@@ -4,9 +4,9 @@ const cors = require('cors');
 const connectDB = require('./config/connectDatabase');
 
 const authRoutes = require('./routes/authRoutes');
-
+const enrollmentRoutes = require('./routes/enrollmentRoutes');
 const app = express();
-
+const progressRoutes = require('./routes/progressRoutes'); 
 // Connect to Database
 connectDB();
 
@@ -16,7 +16,8 @@ app.use(express.json());
 
 // Routes
 app.use('/api/v1/auth', authRoutes);
-
+app.use('/api/v1/enrollments', enrollmentRoutes);
+app.use('/api/v1/progress', progressRoutes);
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
