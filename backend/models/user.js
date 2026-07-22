@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     enum: ['student', 'instructor', 'admin'],
-    default: 'student',
+    default: 'instructor', // FOR TESTING ONLY otherwise default = student
   },
   avatar: {
     type: String,
