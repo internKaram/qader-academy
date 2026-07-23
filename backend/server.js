@@ -6,8 +6,11 @@ const courseRouter = require('./routes/course-routes')
 const lessonRouter = require('./routes/lesson-routes') 
 const authRoutes = require('./routes/auth-routes');
 
-const app = express();
 
+const authRoutes = require('./routes/authRoutes');
+const enrollmentRoutes = require('./routes/enrollmentRoutes');
+const app = express();
+const progressRoutes = require('./routes/progressRoutes'); 
 // Connect to Database
 connectDB();
 
@@ -19,6 +22,8 @@ app.use(express.json());
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/courses', courseRouter)
 app.use('/api/v1/courses', lessonRouter)
+app.use('/api/v1/enrollments', enrollmentRoutes);
+app.use('/api/v1/progress', progressRoutes);
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
