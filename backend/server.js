@@ -7,7 +7,6 @@ const lessonRouter = require('./routes/lesson-routes')
 const authRoutes = require('./routes/auth-routes');
 
 
-const authRoutes = require('./routes/authRoutes');
 const enrollmentRoutes = require('./routes/enrollmentRoutes');
 const app = express();
 const progressRoutes = require('./routes/progressRoutes'); 
