@@ -1,6 +1,63 @@
-### Qader Academy
+# Qader Academy
 
-An online Learning Management System (LMS) built with the MERN stack (MongoDB, Express.js, React, Node.js). See the [SRS document](.) for the full product specification.
+**Learn anything. Prove you learned it.**
+
+Qader Academy is a full-stack Learning Management System (LMS) where instructors publish courses, students learn at their own pace and prove mastery with auto-graded quizzes, and every completed course earns a verifiable certificate. Built end-to-end on the MERN stack by the QaderTech Summer 2026 intern team.
+
+## Features
+
+- 🔐 **Role-based accounts** — Guest, Student, Instructor, and Admin, each with a tailored experience
+- 📚 **Course catalog** — browse and filter published courses without needing an account
+- 🎥 **Lessons** — instructor-authored video + text content, consumed in order
+- ✅ **Auto-graded quizzes** — instant scoring against a configurable passing threshold
+- 📈 **Progress tracking** — a live completion percentage for every enrolled course
+- 🏆 **Verifiable certificates** — auto-issued PDF certificates with a public verification link
+- 🛠️ **Admin dashboard** — user management and platform-wide analytics
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React 18 + Vite, React Router, TailwindCSS |
+| Backend | Node.js 18, Express.js, JWT auth |
+| Database | MongoDB + Mongoose |
+| Tooling | ESLint, Prettier, GitHub Actions CI |
+
+## Project Structure
+
+```
+qader-academy/
+├── backend/     # Express REST API (/api/v1)
+└── frontend/    # React single-page app (Vite)
+```
+
+## Getting Started
+
+Each side of the app is installed and run independently — open two terminals.
+
+**1. Clone the repo**
+```
+git clone https://github.com/internKaram/qader-academy.git
+cd qader-academy
+```
+
+**2. Backend**
+```
+cd backend (you must be in the backend folder)
+npm install
+npm run dev
+```
+
+**3. Frontend** (in a separate terminal)
+(you must be in the frontend folder)
+```
+cd frontend
+npm install
+npm run dev
+```
+The frontend dev server prints a local URL (typically `http://localhost:5173`) — open it in your browser.
+
+> A `docker-compose` setup for one-command startup is planned (Epic `CRS`, owned by Karam) but not yet part of the repo — for now, run each side manually as above.
 
 ## API Contracts
 
