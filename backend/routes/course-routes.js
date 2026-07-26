@@ -14,4 +14,6 @@ router.route("/")
     .patch(courseController.updateCourse)
     .delete(courseController.deleteCourse)
 
+router.route("/:courseId").get(courseController.getSpecificCourse)
+
 module.exports = router

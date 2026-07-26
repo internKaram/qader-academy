@@ -11,6 +11,19 @@ const getAllCourses = asyncHandler(async (request, response) => {
         response.json(courses)
 })
 
+const getSpecificCourse = asyncHandler(async (request, response) => {
+        const { courseId } = request.params
+        const course = await Course.findById(courseId).lean()
+        if(!course){
+            return response.status(404).json({message: "No course found"})
+        }
+
+        const lessons = await Lesson.find({ courseId }).sort({ orderIndex: 1 }).lean()
+
+        response.json({...course ,lessons})
+})
+
+
 // instructor POST
 const createNewCourse = asyncHandler(async (request, response) => {
     console.log(request.user)
@@ -49,6 +62,7 @@ const deleteCourse = asyncHandler(async (request, response) => { // later
 module.exports = 
 {
     getAllCourses,
+    getSpecificCourse,
     createNewCourse,
     updateCourse,
     deleteCourse
