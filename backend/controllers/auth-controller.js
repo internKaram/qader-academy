@@ -187,7 +187,7 @@ const resetPassword = async (req, res) => {
     );
 
     // Mock sending email
-    const resetLink = `http://localhost:5000/reset-password?token=${resetToken}`;
+    const resetLink = `http://localhost:5173/reset-password?token=${resetToken}`;
     console.log('--- MOCK EMAIL ---');
     console.log(`To: ${user.email}`);
     console.log(`Subject: Password Reset Request`);
@@ -201,9 +201,72 @@ const resetPassword = async (req, res) => {
   }
 };
 
+/**
+ * Confirms a password reset by verifying the reset token and updating the user's password.
+ *
+ * Step 2 of the password reset flow. Validates the one-time JWT (issued by resetPassword),
+ * ensures it carries the correct `purpose` claim, hashes the new password, and saves it.
+ *
+ * @async
+ * @param {Object} req - Express request object. Expects `token` (string) and `newPassword` (string) in the body.
+ * @param {Object} res - Express response object.
+ * @returns {Promise<Object>} Returns 200 on success, 400 if the token is invalid/expired or
+ *                            the password is too short, or 500 on an internal error.
+ */
+const confirmPasswordReset = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({ message: 'Token and new password are required' });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters long' });
+    }
+
+    if (!process.env.JWT_SECRET) {
+      throw new Error('FATAL ERROR: JWT_SECRET is not defined.');
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (tokenError) {
+      if (tokenError.name === 'TokenExpiredError') {
+        return res.status(400).json({ message: 'Reset link has expired. Please request a new one.' });
+      }
+      return res.status(400).json({ message: 'Invalid or malformed reset token.' });
+    }
+
+    // Guard against misuse of other JWT types (e.g., auth tokens) as reset tokens
+    if (decoded.purpose !== 'password_reset') {
+      return res.status(400).json({ message: 'Invalid reset token purpose.' });
+    }
+
+    const user = await User.findById(decoded.userId);
+    if (!user) {
+      return res.status(400).json({ message: 'User associated with this token no longer exists.' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.passwordHash = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    return res.status(200).json({ message: 'Password has been reset successfully. You may now log in.' });
+
+  } catch (error) {
+    if (error.message && error.message.startsWith('FATAL ERROR')) {
+      throw error;
+    }
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
 module.exports = {
   register,
   login,
   logout,
-  resetPassword
+  resetPassword,
+  confirmPasswordReset
 };
