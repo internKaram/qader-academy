@@ -1,4 +1,4 @@
-﻿import api from "../api/axios";
+import api from "../api/axios";
 
 // ─── Response Types ──────────────────────────────────────────────────────────
 
@@ -14,6 +14,27 @@ export interface RequestResetResponse {
  */
 export interface ConfirmResetResponse {
   message: string;
+}
+
+/**
+ * User profile object returned upon successful authentication.
+ */
+export interface UserProfile {
+  _id: string;
+  name: string;
+  email: string;
+  role: "student" | "instructor" | "admin";
+  avatar?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Shape of the payload returned by loginUser upon successful authentication.
+ */
+export interface LoginResponse {
+  token: string;
+  user: UserProfile;
 }
 
 // ─── Service Functions ────────────────────────────────────────────────────────
@@ -56,5 +77,20 @@ export async function confirmPasswordReset(
     "/auth/confirm-reset",
     { token, newPassword }
   );
+  return data;
+}
+
+/**
+ * Authenticates a user with email and password credentials.
+ * Returns the JWT token and user profile on success.
+ *
+ * @param {Object} credentials - The user's email and password.
+ * @returns {Promise<LoginResponse>} The token and user profile.
+ */
+export async function loginUser(credentials: {
+  email: string;
+  password: string;
+}): Promise<LoginResponse> {
+  const { data } = await api.post<LoginResponse>("/auth/login", credentials);
   return data;
 }
