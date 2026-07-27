@@ -248,11 +248,11 @@ export function ForgotPasswordPage() {
                           </Button>
                         </div>
 
-                        {/* Back to login */}
+                        {/* Back to sign in */}
                         <p className="pt-2 text-center text-xs text-ink-muted">
                           Remembered it?{" "}
                           <Link to="/login" className="font-bold text-brand-600 hover:underline">
-                            Log in
+                            Sign in
                           </Link>
                         </p>
                       </form>

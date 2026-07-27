@@ -37,7 +37,39 @@ export interface LoginResponse {
   user: UserProfile;
 }
 
+/**
+ * Shape of the payload expected by registerUser.
+ */
+export interface RegisterCredentials {
+  name: string;
+  email: string;
+  password: string;
+}
+
+/**
+ * Shape of the payload returned by registerUser upon successful registration.
+ */
+export interface RegisterResponse {
+  token: string;
+  user: UserProfile;
+}
+
 // ─── Service Functions ────────────────────────────────────────────────────────
+
+/**
+ * Registers a new user with name, email, and password.
+ * Returns the JWT token and user profile on success.
+ *
+ * @param {RegisterCredentials} credentials - The user's name, email, and password.
+ * @returns {Promise<RegisterResponse>} The JWT token and user profile.
+ * @throws {import("axios").AxiosError} On 400 (validation failure or user already exists).
+ */
+export async function registerUser(
+  credentials: RegisterCredentials
+): Promise<RegisterResponse> {
+  const { data } = await api.post<RegisterResponse>("/auth/register", credentials);
+  return data;
+}
 
 /**
  * Step 1 of the password reset flow.
