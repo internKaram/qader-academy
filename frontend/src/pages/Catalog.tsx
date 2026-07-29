@@ -2,12 +2,15 @@ import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { Badge, Button, Card, Spinner } from "../components/ui"
 import api from "../api/axios"
+import { useAuth } from "../hooks/useAuth"
 import type { Course } from "../types/course"
-import { ArrowLeft } from "lucide-react"
+
 function CatalogPage() {
     const [courses, setCourses] = useState<Course[]>([])
     const [loading, setLoading] = useState<boolean>(true)
     const [error, setError] = useState<string | null>(null)
+    const { user } = useAuth()
+    const canCreateCourses = user?.role === "instructor" || user?.role === "admin"
 
     useEffect(() => {
         const fetchCourses = async () => {
@@ -26,14 +29,17 @@ function CatalogPage() {
     return (
         <main className="min-h-screen bg-canvas-soft py-10 text-ink">
             <div className="page-container">
-                <Link to="/" className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-ink-soft transition hover:text-brand-700">
-                    <ArrowLeft className="size-4" />
-                    Back to home
-                </Link>
-                <div className="max-w-2xl">
-                    <p className="eyebrow">Catalog</p>
-                    <h1 className="mt-3 font-display text-heading-lg">Browse all courses.</h1>
-                    <p className="mt-4 body-copy">Explore every published course on QaderAcademy.</p>
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+                    <div className="max-w-2xl">
+                        <p className="eyebrow">Catalog</p>
+                        <h1 className="mt-3 font-display text-heading-lg">Browse all courses.</h1>
+                        <p className="mt-4 body-copy">Explore every published course on QaderAcademy.</p>
+                    </div>
+                    {canCreateCourses && (
+                        <Link to="/instructor/courses/new">
+                            <Button>Create new course</Button>
+                        </Link>
+                    )}
                 </div>
 
                 {loading ? (
@@ -51,27 +57,43 @@ function CatalogPage() {
                     </div>
                 ) : (
                     <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                        {courses.map((course) => (
-                            <Card key={course._id} variant="surface" interactive className="flex h-full flex-col">
-                                <Card.Header>
-                                    <Badge variant="neutral">{course.category}</Badge>
-                                    <h3 className="font-display text-heading-sm text-ink">{course.title}</h3>
-                                </Card.Header>
-                                <Card.Body>
-                                    <p className="line-clamp-3 text-sm leading-6 text-ink-soft">
-                                        {course.description}
-                                    </p>
-                                </Card.Body>
-                                <Card.Footer className="mt-auto items-center justify-between">
-                                    <p className="font-display text-xl font-black text-ink">{course.price} SAR</p>
-                                    <Link to={`/courses/${course._id}`}>
-                                        <Button size="sm" variant="outline">
-                                            View course
-                                        </Button>
-                                    </Link>
-                                </Card.Footer>
-                            </Card>
-                        ))}
+                        {courses.map((course) => {
+                            const isOwner = user?.id === course.instructorId
+                            return (
+                                <Card key={course._id} variant="surface" interactive className="flex h-full flex-col">
+                                    <Card.Header>
+                                        <div className="flex items-center justify-between gap-2">
+                                            <Badge variant="neutral">{course.category}</Badge>
+                                            {isOwner && <Badge variant="brand">Your course</Badge>}
+                                        </div>
+                                        <h3 className="font-display text-heading-sm text-ink">{course.title}</h3>
+                                    </Card.Header>
+                                    <Card.Body>
+                                        <p className="line-clamp-3 text-sm leading-6 text-ink-soft">
+                                            {course.description}
+                                        </p>
+                                    </Card.Body>
+                                    <Card.Footer className="mt-auto flex-wrap items-center justify-between gap-2">
+                                        <p className="font-display text-xl font-black text-ink">{course.price} SAR</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {isOwner && (
+                                                <>
+                                                    <Link to={`/instructor/courses/${course._id}/edit`}>
+                                                        <Button size="sm" variant="ghost">Edit</Button>
+                                                    </Link>
+                                                    <Link to={`/instructor/courses/${course._id}/lessons`}>
+                                                        <Button size="sm" variant="ghost">Add lessons</Button>
+                                                    </Link>
+                                                </>
+                                            )}
+                                            <Link to={`/courses/${course._id}`}>
+                                                <Button size="sm" variant="outline">View course</Button>
+                                            </Link>
+                                        </div>
+                                    </Card.Footer>
+                                </Card>
+                            )
+                        })}
                     </div>
                 )}
             </div>
