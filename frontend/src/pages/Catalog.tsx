@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
+import { SiteFooter, SiteHeader } from "../components/SiteChrome"
 import { Badge, Button, Card, Spinner } from "../components/ui"
 import api from "../api/axios"
 import type { Course } from "../types/course"
-import { ArrowLeft } from "lucide-react"
+
 function CatalogPage() {
     const [courses, setCourses] = useState<Course[]>([])
     const [loading, setLoading] = useState<boolean>(true)
@@ -14,7 +15,7 @@ function CatalogPage() {
             try {
                 const response = await api.get<Course[]>("/courses")
                 setCourses(response.data)
-            } catch (err) {
+            } catch {
                 setError("Failed to load courses")
             } finally {
                 setLoading(false)
@@ -24,12 +25,10 @@ function CatalogPage() {
     }, [])
 
     return (
-        <main className="min-h-screen bg-canvas-soft py-10 text-ink">
+        <div className="min-h-screen bg-canvas-soft text-ink">
+            <SiteHeader />
+            <main className="min-h-screen pt-28 pb-16">
             <div className="page-container">
-                <Link to="/" className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-ink-soft transition hover:text-brand-700">
-                    <ArrowLeft className="size-4" />
-                    Back to home
-                </Link>
                 <div className="max-w-2xl">
                     <p className="eyebrow">Catalog</p>
                     <h1 className="mt-3 font-display text-heading-lg">Browse all courses.</h1>
@@ -75,7 +74,9 @@ function CatalogPage() {
                     </div>
                 )}
             </div>
-        </main>
+            </main>
+            <SiteFooter sectionBasePath="/" />
+        </div>
     )
 }
 

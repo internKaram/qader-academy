@@ -91,6 +91,11 @@
 }
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5.5rem;
+  }
+
   body {
     margin: 0;
     background: var(--color-canvas);
@@ -109,6 +114,16 @@
   :focus-visible {
     outline: 3px solid rgb(215 38 61 / 0.45);
     outline-offset: 3px;
+  }
+
+  [id] {
+    scroll-margin-top: 5.5rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
   }
 }
 

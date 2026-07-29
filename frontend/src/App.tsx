@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { useEffect } from "react"
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom"
 import { HomePage } from './pages/HomePage'
 import { StyleGuidePage } from './pages/StyleGuidePage'
 import CatalogPage from './pages/Catalog'
@@ -8,9 +9,27 @@ import { ResetPasswordPage } from "./pages/ResetPasswordPage"
 import { LoginPage } from "./pages/LoginPage"
 import { RegisterPage } from "./pages/RegisterPage"
 
+function HashScroll() {
+  const { hash } = useLocation()
+
+  useEffect(() => {
+    if (!hash) return
+
+    const id = decodeURIComponent(hash.slice(1))
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" })
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [hash])
+
+  return null
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <HashScroll />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/style-guide" element={<StyleGuidePage />} />
