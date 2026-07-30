@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, CheckCircle2, FilePenLine, Users } from 'lucide-react';
 import { InstructorShell } from '../../components/instructor/InstructorShell';
@@ -46,6 +46,17 @@ const purchaseSeries = [
   { label: 'Jul 28', purchases: 3 },
   { label: 'Jul 29', purchases: 6 },
 ];
+
+const chartGridSteps = 3;
+const chartYAxisThreshold = 6;
+
+function getYAxisMax(maxSales: number) {
+  if (maxSales <= chartYAxisThreshold) {
+    return chartYAxisThreshold;
+  }
+
+  return Math.ceil((maxSales * 1.1) / chartGridSteps) * chartGridSteps;
+}
 
 const courseColumns: TableColumn<InstructorCourse>[] = [
   {
@@ -113,24 +124,52 @@ function CoursePurchasesChart() {
   const [activeIndex, setActiveIndex] = useState(purchaseSeries.length - 1);
   const [pointerGuideX, setPointerGuideX] = useState<number | null>(null);
   const [isInspecting, setIsInspecting] = useState(false);
+  const [chartWidth, setChartWidth] = useState(720);
   const chartWrapperRef = useRef<HTMLDivElement>(null);
-  const chartWidth = 720;
   const chartHeight = 240;
-  const chartPadding = 34;
-  const maxPurchases = Math.max(32, ...purchaseSeries.map((point) => point.purchases));
+  const chartPadding = { top: 24, right: 16, bottom: 38, left: 44 };
+  const chartBottom = chartHeight - chartPadding.bottom;
+  const chartInnerHeight = chartHeight - chartPadding.top - chartPadding.bottom;
+  const chartInnerWidth = Math.max(1, chartWidth - chartPadding.left - chartPadding.right);
+  const maxSales = Math.max(0, ...purchaseSeries.map((point) => point.purchases));
+  const yAxisMax = getYAxisMax(maxSales);
+  const yAxisTicks = useMemo(
+    () => Array.from({ length: chartGridSteps + 1 }, (_, index) => yAxisMax - index * (yAxisMax / chartGridSteps)),
+    [yAxisMax],
+  );
   const activePoint = purchaseSeries[activeIndex];
   const totalPurchases = purchaseSeries.reduce((sum, point) => sum + point.purchases, 0);
 
+  useEffect(() => {
+    const chartElement = chartWrapperRef.current;
+    if (!chartElement) {
+      return undefined;
+    }
+
+    const observedElement: HTMLDivElement = chartElement;
+
+    function updateChartWidth() {
+      setChartWidth(Math.max(280, Math.floor(observedElement.clientWidth)));
+    }
+
+    updateChartWidth();
+
+    const resizeObserver = new ResizeObserver(updateChartWidth);
+    resizeObserver.observe(observedElement);
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
   const chartPoints = useMemo(() => {
     return purchaseSeries.map((point, index) => {
-      const x = chartPadding + (index / (purchaseSeries.length - 1)) * (chartWidth - chartPadding * 2);
-      const y = chartHeight - chartPadding - (point.purchases / maxPurchases) * (chartHeight - chartPadding * 2);
+      const x = chartPadding.left + (index / (purchaseSeries.length - 1)) * chartInnerWidth;
+      const y = chartBottom - (point.purchases / yAxisMax) * chartInnerHeight;
       return { ...point, x, y };
     });
-  }, [maxPurchases]);
+  }, [chartBottom, chartInnerHeight, chartInnerWidth, chartPadding.left, yAxisMax]);
 
   const linePath = chartPoints.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
-  const areaPath = `${linePath} L ${chartPoints.at(-1)?.x ?? chartPadding} ${chartHeight - chartPadding} L ${chartPadding} ${chartHeight - chartPadding} Z`;
+  const areaPath = `${linePath} L ${chartPoints.at(-1)?.x ?? chartPadding.left} ${chartBottom} L ${chartPadding.left} ${chartBottom} Z`;
   const activeChartPoint = chartPoints[activeIndex];
   const guideX = pointerGuideX ?? activeChartPoint.x;
 
@@ -147,13 +186,15 @@ function CoursePurchasesChart() {
     }
 
     const svgScale = bounds.width / chartWidth;
-    return `${pointX * svgScale}px`;
+    const clientX = pointX * svgScale;
+    const tooltipHalfWidth = Math.min(70, bounds.width / 2);
+    return `${Math.min(Math.max(clientX, tooltipHalfWidth), bounds.width - tooltipHalfWidth)}px`;
   }
 
   function followPointer(event: PointerEvent<SVGSVGElement>) {
     const bounds = event.currentTarget.getBoundingClientRect();
     const x = ((event.clientX - bounds.left) / bounds.width) * chartWidth;
-    const clampedX = Math.min(Math.max(x, chartPadding), chartWidth - chartPadding);
+    const clampedX = Math.min(Math.max(x, chartPadding.left), chartWidth - chartPadding.right);
     const nearestIndex = chartPoints.reduce((nearest, point, index) => {
       return Math.abs(point.x - clampedX) < Math.abs(chartPoints[nearest].x - clampedX) ? index : nearest;
     }, 0);
@@ -161,6 +202,22 @@ function CoursePurchasesChart() {
     setPointerGuideX(clampedX);
     setActiveIndex(nearestIndex);
     setIsInspecting(true);
+  }
+
+  function shouldShowDateLabel(index: number) {
+    if (index === chartPoints.length - 1) {
+      return true;
+    }
+
+    if (chartWidth < 420) {
+      return index % 10 === 0;
+    }
+
+    if (chartWidth < 560) {
+      return index % 7 === 0;
+    }
+
+    return index % 5 === 0;
   }
 
   return (
@@ -184,14 +241,14 @@ function CoursePurchasesChart() {
       </div>
 
       <div className="mt-10 overflow-visible">
-        <div ref={chartWrapperRef} className="relative w-full min-w-[42rem] overflow-visible">
+        <div ref={chartWrapperRef} className="relative w-full min-w-0 overflow-visible">
           {isInspecting ? (
             <div
               className="pointer-events-none absolute z-30 w-[8.75rem] -translate-x-1/2 rounded-control bg-ink px-4 py-3 text-center text-white shadow-lift"
               style={{
                 left: getChartClientX(activeChartPoint.x),
                 top: `${(activeChartPoint.y / chartHeight) * 100}%`,
-                transform: 'translate(0, calc(-100% - 18px))',
+                transform: 'translate(-50%, calc(-100% - 18px))',
               }}
             >
               <p className="text-xs font-extrabold leading-none">{activePoint.label}</p>
@@ -217,9 +274,23 @@ function CoursePurchasesChart() {
             </linearGradient>
           </defs>
 
-          {[0, 1, 2, 3].map((gridLine) => {
-            const y = chartPadding + gridLine * ((chartHeight - chartPadding * 2) / 3);
-            return <line key={gridLine} x1={chartPadding} x2={chartWidth - chartPadding} y1={y} y2={y} stroke="#e5e7eb" strokeDasharray="6 8" />;
+          {yAxisTicks.map((tick) => {
+            const y = chartPadding.top + ((yAxisMax - tick) / yAxisMax) * chartInnerHeight;
+            return (
+              <g key={tick}>
+                <line
+                  x1={chartPadding.left}
+                  x2={chartWidth - chartPadding.right}
+                  y1={y}
+                  y2={y}
+                  stroke="#e5e7eb"
+                  strokeDasharray={tick === 0 ? undefined : '6 8'}
+                />
+                <text fill="#697386" fontSize="11" fontWeight="700" textAnchor="end" x={chartPadding.left - 10} y={y + 4}>
+                  {tick}
+                </text>
+              </g>
+            );
           })}
 
           <path d={areaPath} fill="url(#purchase-chart-fill)" />
@@ -229,8 +300,8 @@ function CoursePurchasesChart() {
             <line
               x1={guideX}
               x2={guideX}
-              y1={chartPadding}
-              y2={chartHeight - chartPadding}
+              y1={chartPadding.top}
+              y2={chartBottom}
               stroke="#d7263d"
               strokeDasharray="5 7"
               strokeOpacity="0.35"
@@ -255,6 +326,7 @@ function CoursePurchasesChart() {
               }}
               onMouseEnter={() => {
                 setActiveIndex(index);
+                setPointerGuideX(point.x);
                 setIsInspecting(true);
               }}
               role="button"
@@ -263,7 +335,7 @@ function CoursePurchasesChart() {
             >
               <title>{`${point.label}: ${point.purchases} purchases`}</title>
               <circle cx={point.x} cy={point.y} fill="transparent" r="10" />
-              {index % 5 === 0 || index === chartPoints.length - 1 ? (
+              {shouldShowDateLabel(index) ? (
                 <text fill="#697386" fontSize="11" fontWeight="700" textAnchor="middle" x={point.x} y={chartHeight - 8}>
                   {point.label.slice(4)}
                 </text>
