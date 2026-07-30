@@ -1,16 +1,21 @@
 import { useEffect, useState } from "react"
 import { useParams, Link } from "react-router-dom"
 import { Badge, Button, Card, Spinner } from "../components/ui"
-import { Clock, BookOpen } from "lucide-react"
 import api from "../api/axios"
 import type { CourseWithLessons } from "../types/course"
 import { ArrowLeft } from "lucide-react"
+import { Clock, BookOpen, Pencil, Plus } from "lucide-react"
+import { useAuth } from "../hooks/useAuth"
+
+
 function CourseDetailPage() {
     const { courseId } = useParams<{ courseId: string }>()
     const [course, setCourse] = useState<CourseWithLessons | null>(null)
     const [loading, setLoading] = useState<boolean>(true)
     const [error, setError] = useState<string | null>(null)
+    const { user } = useAuth()
 
+    
     useEffect(() => {
         if (!courseId) return
         const fetchCourse = async () => {
@@ -26,6 +31,8 @@ function CourseDetailPage() {
         fetchCourse()
     }, [courseId])
 
+
+    
     if (loading) {
         return (
             <main className="grid min-h-screen place-items-center bg-canvas-soft">
@@ -46,6 +53,8 @@ function CourseDetailPage() {
             </main>
         )
     }
+
+    const isOwner = user?.id === course.instructorId
 
     return (
         <main className="min-h-screen bg-canvas-soft py-10 text-ink">
@@ -79,7 +88,16 @@ function CourseDetailPage() {
                         <h2 className="font-display text-heading-sm text-ink">About this course</h2>
                         <p className="mt-4 body-copy">{course.description}</p>
 
-                        <h2 className="mt-10 font-display text-heading-sm text-ink">Lessons</h2>
+                        <div className="mt-10 flex items-center justify-between">
+                            <h2 className="font-display text-heading-sm text-ink">Lessons</h2>
+                            {isOwner && (
+                                <Link to={`/instructor/courses/${course._id}/lessons`}>
+                                    <Button className="addLesson-buttonTitle"size="sm" variant="outline" title="Add Lesson">
+                                        <Plus className="size-4" />
+                                    </Button>
+                                </Link>
+                            )}
+                        </div>
                         <ul className="mt-4 space-y-3">
                                 {(course.lessons ?? []).map((lesson) => (
                                 <li
@@ -92,10 +110,13 @@ function CourseDetailPage() {
                                         </span>
                                         <p className="font-bold text-ink">{lesson.title}</p>
                                     </div>
-                                    <span className="flex items-center gap-1.5 text-sm text-ink-soft">
-                                        <Clock className="size-4" />
-                                        {lesson.duration} min
-                                    </span>
+                                    <div className="flex items-center gap-4">
+                                        <span className="flex items-center gap-1.5 text-sm text-ink-soft">
+                                            <Clock className="size-4" />
+                                            {lesson.duration} min
+                                        </span>
+                                    
+                                    </div>
                                 </li>
                             ))}
                         </ul>

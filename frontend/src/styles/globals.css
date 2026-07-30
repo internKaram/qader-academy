@@ -230,3 +230,8 @@
     overflow: hidden;
   }
 }
+
+.RedDeleteCourse{
+  background-color: red;
+  outline-color: red;
+}
