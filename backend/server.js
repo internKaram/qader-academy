@@ -7,6 +7,7 @@ const authRoutes = require('./routes/authRoutes');
 const enrollmentRoutes = require('./routes/enrollmentRoutes');
 const app = express();
 const progressRoutes = require('./routes/progressRoutes'); 
+const adminRoutes = require('./routes/admin-routes'); //انا اضفته
 // Connect to Database
 connectDB();
 
@@ -18,6 +19,7 @@ app.use(express.json());
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/enrollments', enrollmentRoutes);
 app.use('/api/v1/progress', progressRoutes);
+app.use('/api/v1/admin', adminRoutes); //اضفته انا
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
