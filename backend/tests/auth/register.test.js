@@ -1,10 +1,9 @@
-// TODO: Incomplete because of frontend. This should be an E2E test.
 const request = require('supertest');
 const express = require('express');
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
-const authRoutes = require('../../routes/authRoutes');
-const User = require('../../models/User');
+const authRoutes = require('../../routes/auth-routes');
+const User = require('../../models/user');
 
 let mongoServer;
 const app = express();
