@@ -4,6 +4,8 @@ import { Badge, Button, Card, Spinner } from "../components/ui"
 import api from "../api/axios"
 import { useAuth } from "../hooks/useAuth"
 import type { Course } from "../types/course"
+import { ArrowLeft } from "lucide-react"
+import { Trash2 } from "lucide-react"
 
 function CatalogPage() {
     const [courses, setCourses] = useState<Course[]>([])
@@ -25,6 +27,18 @@ function CatalogPage() {
         }
         fetchCourses()
     }, [])
+
+
+    async function handleDeleteCourse(courseId: string) {
+    if (!window.confirm("Delete this course and all its lessons? This cannot be undone.")) return
+    try {
+        await api.delete(`/courses/${courseId}`)
+        setCourses((prev) => prev.filter((c) => c._id !== courseId))
+    } catch {
+        setError("Failed to delete course. Please try again.")
+    }
+}
+
 
     return (
         <main className="min-h-screen bg-canvas-soft py-10 text-ink">
@@ -84,6 +98,14 @@ function CatalogPage() {
                                                     <Link to={`/instructor/courses/${course._id}/lessons`}>
                                                         <Button size="sm" variant="ghost">Add lessons</Button>
                                                     </Link>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="secondary"
+                                                        aria-label={`Delete ${course.title}`}
+                                                        onClick={() => handleDeleteCourse(course._id)}
+                                                    >
+                                                        <Trash2 className="size-4" />
+                                                    </Button>
                                                 </>
                                             )}
                                             <Link to={`/courses/${course._id}`}>
