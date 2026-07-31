@@ -5,7 +5,7 @@ type InputNativeProps = Omit<ComponentPropsWithoutRef<'input'>, 'size'>;
 type TextareaNativeProps = Omit<ComponentPropsWithoutRef<'textarea'>, 'size'>;
 
 interface BaseFieldProps {
-  label: string;
+  label?: string;
   hint?: string;
   error?: string;
   optional?: boolean;
@@ -45,13 +45,15 @@ export function Input(props: InputProps) {
 
   return (
     <div className={cn('space-y-2', className)}>
-      <div className="flex items-center justify-between gap-3">
-        <label className="text-sm font-bold text-ink" htmlFor={fieldId}>
-          {label}
-        </label>
-        {required ? <span className="text-xs font-bold text-brand-700">Required</span> : null}
-        {!required && optional ? <span className="text-xs font-medium text-ink-muted">Optional</span> : null}
-      </div>
+      {label ? (
+        <div className="flex items-center justify-between gap-3">
+          <label className="text-sm font-bold text-ink" htmlFor={fieldId}>
+            {label}
+          </label>
+          {required ? <span className="text-xs font-bold text-brand-700">Required</span> : null}
+          {!required && optional ? <span className="text-xs font-medium text-ink-muted">Optional</span> : null}
+        </div>
+      ) : null}
 
       {multiline ? (
         <textarea
