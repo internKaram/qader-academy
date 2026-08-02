@@ -1,7 +1,7 @@
 const Course = require("../models/Course")
 const Lesson = require("../models/Lesson")
 const asyncHandler = require("express-async-handler")
-
+const mongoose = require('mongoose');
 // public GET
 const getAllCourses = asyncHandler(async (request, response) => {
         const courses = await Course.find().lean() 
@@ -49,14 +49,51 @@ const createNewCourse = asyncHandler(async (request, response) => {
 })
 
 
-const updateCourse = asyncHandler(async (request, response) => { // later
+const updateCourse = asyncHandler(async (request, response) => { 
+    const {title, description, category, price, thumbnail, isPublished} = request.body
+    const {courseId} = request.params
+    const wantedCourse = await Course.findById(courseId)
+
+    if(!wantedCourse){
+        return response.status(404).json({message: "Course does not exist"})
+    }
+
+    if (wantedCourse.instructorId.toString() !== request.user.userId) {
+        return response.status(403).json({message: "Unauthorized to update this course"})
+    }
+        
+    const updates = {}
+        if (title !== undefined) updates.title = title
+        if (description !== undefined) updates.description = description
+        if (category !== undefined) updates.category = category
+        if (price !== undefined) updates.price = price
+        if (thumbnail !== undefined) updates.thumbnail = thumbnail
+        if (isPublished !== undefined) updates.isPublished = isPublished
+
+    const updatedCourse = await Course.findByIdAndUpdate(courseId, updates, { new: true, runValidators: true })
+
+    response.json(updatedCourse)
+        
 
 
 })
 
-const deleteCourse = asyncHandler(async (request, response) => { // later
+const deleteCourse = asyncHandler(async (request, response) => {
+    const { courseId } = request.params
+    const wantedCourse = await Course.findById(courseId)
 
+    if (!wantedCourse) {
+        return response.status(404).json({ message: "Course does not exist" })
+    }
 
+    if (wantedCourse.instructorId.toString() !== request.user.userId) {
+        return response.status(403).json({ message: "Unauthorized to delete this course" })
+    }
+
+    await Lesson.deleteMany({ courseId })
+    await Course.findByIdAndDelete(courseId)
+
+    response.json({ message: "Course and its lessons deleted successfully" })
 })
 
 module.exports = 

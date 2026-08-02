@@ -3,12 +3,17 @@ import { Link } from "react-router-dom"
 import { SiteFooter, SiteHeader } from "../components/SiteChrome"
 import { Badge, Button, Card, Spinner } from "../components/ui"
 import api from "../api/axios"
+import { useAuth } from "../hooks/useAuth"
 import type { Course } from "../types/course"
+import { ArrowLeft } from "lucide-react"
+import { Trash2 } from "lucide-react"
 
 function CatalogPage() {
     const [courses, setCourses] = useState<Course[]>([])
     const [loading, setLoading] = useState<boolean>(true)
     const [error, setError] = useState<string | null>(null)
+    const { user } = useAuth()
+    const canCreateCourses = user?.role === "instructor" || user?.role === "admin"
 
     useEffect(() => {
         const fetchCourses = async () => {
@@ -23,6 +28,18 @@ function CatalogPage() {
         }
         fetchCourses()
     }, [])
+
+
+    async function handleDeleteCourse(courseId: string) {
+    if (!window.confirm("Delete this course and all its lessons? This cannot be undone.")) return
+    try {
+        await api.delete(`/courses/${courseId}`)
+        setCourses((prev) => prev.filter((c) => c._id !== courseId))
+    } catch {
+        setError("Failed to delete course. Please try again.")
+    }
+}
+
 
     return (
         <div className="min-h-screen bg-canvas-soft text-ink">
@@ -50,27 +67,51 @@ function CatalogPage() {
                     </div>
                 ) : (
                     <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                        {courses.map((course) => (
-                            <Card key={course._id} variant="surface" interactive className="flex h-full flex-col">
-                                <Card.Header>
-                                    <Badge variant="neutral">{course.category}</Badge>
-                                    <h3 className="font-display text-heading-sm text-ink">{course.title}</h3>
-                                </Card.Header>
-                                <Card.Body>
-                                    <p className="line-clamp-3 text-sm leading-6 text-ink-soft">
-                                        {course.description}
-                                    </p>
-                                </Card.Body>
-                                <Card.Footer className="mt-auto items-center justify-between">
-                                    <p className="font-display text-xl font-black text-ink">{course.price} SAR</p>
-                                    <Link to={`/courses/${course._id}`}>
-                                        <Button size="sm" variant="outline">
-                                            View course
-                                        </Button>
-                                    </Link>
-                                </Card.Footer>
-                            </Card>
-                        ))}
+                        {courses.map((course) => {
+                            const isOwner = user?.id === course.instructorId
+                            return (
+                                <Card key={course._id} variant="surface" interactive className="flex h-full flex-col">
+                                    <Card.Header>
+                                        <div className="flex items-center justify-between gap-2">
+                                            <Badge variant="neutral">{course.category}</Badge>
+                                            {isOwner && <Badge variant="brand">Your course</Badge>}
+                                        </div>
+                                        <h3 className="font-display text-heading-sm text-ink">{course.title}</h3>
+                                    </Card.Header>
+                                    <Card.Body>
+                                        <p className="line-clamp-3 text-sm leading-6 text-ink-soft">
+                                            {course.description}
+                                        </p>
+                                    </Card.Body>
+                                    <Card.Footer className="mt-auto flex-wrap items-center justify-between gap-2">
+                                        <p className="font-display text-xl font-black text-ink">{course.price} SAR</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {isOwner && (
+                                                <>
+                                                    <Link to={`/instructor/courses/${course._id}/edit`}>
+                                                        <Button size="sm" variant="ghost">Edit</Button>
+                                                    </Link>
+                                                    <Link to={`/instructor/courses/${course._id}/lessons`}>
+                                                        <Button size="sm" variant="ghost">Add lessons</Button>
+                                                    </Link>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="secondary"
+                                                        aria-label={`Delete ${course.title}`}
+                                                        onClick={() => handleDeleteCourse(course._id)}
+                                                    >
+                                                        <Trash2 className="size-4" />
+                                                    </Button>
+                                                </>
+                                            )}
+                                            <Link to={`/courses/${course._id}`}>
+                                                <Button size="sm" variant="outline">View course</Button>
+                                            </Link>
+                                        </div>
+                                    </Card.Footer>
+                                </Card>
+                            )
+                        })}
                     </div>
                 )}
             </div>

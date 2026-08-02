@@ -8,7 +8,12 @@ router
   .route('/')
   .get(lessonController.getAllLessons)
   .post(authMiddleware, rbacMiddleware('instructor', 'admin'), lessonController.createNewLesson)
-  .patch(authMiddleware, rbacMiddleware('instructor', 'admin'), lessonController.updateLesson)
-  .delete(authMiddleware, rbacMiddleware('instructor', 'admin'), lessonController.deleteLesson);
 
-module.exports = router;
+
+router.route("/reorder")
+    .patch(authMiddleware, rbacMiddleware("instructor", "admin"), lessonController.reorderLessons)
+
+router.route("/:lessonId")
+    .patch(authMiddleware, rbacMiddleware("instructor", "admin"), lessonController.updateLesson)
+    .delete(authMiddleware, rbacMiddleware("instructor", "admin"), lessonController.deleteLesson)
+module.exports = router;

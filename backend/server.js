@@ -6,6 +6,8 @@ const courseRouter = require('./routes/course-routes')
 const lessonRouter = require('./routes/lesson-routes') 
 const authRoutes = require('./routes/auth-routes');
 
+const authRoutes = require('./routes/authRoutes');
+const certificateRoutes = require('./routes/certificateRoutes');
 
 const enrollmentRoutes = require('./routes/enrollmentRoutes');
 const app = express();
@@ -19,6 +21,8 @@ app.use(express.json());
 
 // Routes
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/certificates', certificateRoutes);
+
 app.use('/api/v1/courses', courseRouter)
 app.use('/api/v1/courses', lessonRouter)
 app.use('/api/v1/enrollments', enrollmentRoutes);
