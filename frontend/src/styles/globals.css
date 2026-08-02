@@ -433,7 +433,8 @@
     width: 100%;
   }
 
-.RedDeleteCourse{
-  background-color: red;
-  outline-color: red;
+  .RedDeleteCourse {
+    background-color: red;
+    outline-color: red;
+  }
 }
