@@ -10,6 +10,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import CourseWizardPage from "./pages/CourseWizardPage";
 import LessonEditorPage from "./pages/LessonEditorPage";
+import AdminDashboard from "./pages/adminDashboard";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
         <Route path="/instructor/courses/new" element={<CourseWizardPage />} />
         <Route path="/instructor/courses/:courseId/edit" element={<CourseWizardPage />} />
         <Route path="/instructor/courses/:courseId/lessons" element={<LessonEditorPage />} />
+        <Route path="/admin" element={<AdminDashboard />} />
       </Routes>
     </BrowserRouter>
   );
