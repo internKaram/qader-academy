@@ -1,6 +1,7 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Input, Button, Card } from "../components/ui";
+import { SiteChrome } from "../components/SiteChrome";
 import { confirmPasswordReset } from "../services/auth-service";
 import { isAxiosError } from "axios";
 import { Eye, EyeOff, CheckCircle2, AlertCircle } from "lucide-react";
@@ -120,114 +121,10 @@ export function ResetPasswordPage() {
     }
   }
 
-  const currentYear = new Date().getFullYear();
-
-  // Common Header component
-  const HeaderComponent = (
-    <header className="fixed inset-x-0 top-0 z-40 bg-white/90 shadow-[0_10px_30px_rgb(18_24_38_/_0.04)] backdrop-blur-xl">
-      <div className="page-container flex min-h-18 items-center justify-between gap-6">
-        <Link className="font-display text-xl font-black tracking-normal text-ink" to="/" aria-label="QaderAcademy home">
-          QaderAcademy
-        </Link>
-
-        <nav className="hidden items-center gap-6 text-sm font-bold text-ink-soft md:flex" aria-label="Primary navigation">
-          <Link className="transition hover:text-brand-700" to="/">
-            About
-          </Link>
-          <Link className="transition hover:text-brand-700" to="/courses">
-            Courses
-          </Link>
-          <Link className="transition hover:text-brand-700" to="/">
-            Contact
-          </Link>
-        </nav>
-
-        <Link to="/login">
-          <Button size="sm" className="rounded-full bg-canvas-warm text-ink-soft hover:bg-canvas-warm/80 border border-line/60 font-bold px-5">
-            Sign In
-          </Button>
-        </Link>
-      </div>
-    </header>
-  );
-
-  // Common Full Footer component
-  const FooterComponent = (
-    <footer className="bg-canvas-dark pt-14 text-white">
-      <div className="page-container">
-        <div className="grid gap-10 border-b border-white/12 pb-10 md:grid-cols-2 lg:grid-cols-[1.25fr_0.8fr_0.8fr_1fr]">
-          <div>
-            <Link className="font-display text-2xl font-black text-white" to="/" aria-label="QaderAcademy home">
-              QaderAcademy
-            </Link>
-            <p className="mt-4 max-w-sm text-sm leading-7 text-white/68">
-              Practical learning paths for career-relevant skills.
-            </p>
-          </div>
-
-          <div>
-            <h2 className="text-sm font-black uppercase tracking-[0.14em] text-white">Learn</h2>
-            <nav className="mt-4 grid gap-3 text-sm font-bold text-white/68" aria-label="Course categories">
-              <Link className="transition hover:text-white" to="/courses">
-                Featured courses
-              </Link>
-              <Link className="transition hover:text-white" to="/courses">
-                Frontend development
-              </Link>
-              <Link className="transition hover:text-white" to="/courses">
-                Data analysis
-              </Link>
-              <Link className="transition hover:text-white" to="/courses">
-                Career communication
-              </Link>
-            </nav>
-          </div>
-
-          <div>
-            <h2 className="text-sm font-black uppercase tracking-[0.14em] text-white">Company</h2>
-            <nav className="mt-4 grid gap-3 text-sm font-bold text-white/68" aria-label="Company navigation">
-              <Link className="transition hover:text-white" to="/">
-                About
-              </Link>
-              <Link className="transition hover:text-white" to="/">
-                Testimonials
-              </Link>
-              <Link className="transition hover:text-white" to="/">
-                Contact
-              </Link>
-            </nav>
-          </div>
-
-          <div>
-            <h2 className="text-sm font-black uppercase tracking-[0.14em] text-white">Contact</h2>
-            <div className="mt-4 grid gap-3 text-sm text-white/68">
-              <p>Madinah, Saudi Arabia</p>
-              <a className="font-bold transition hover:text-white" href="mailto:support@qaderacademy.com">
-                support@qaderacademy.com
-              </a>
-              <a className="font-bold transition hover:text-white" href="tel:+966560019865">
-                +966 56 001 9865
-              </a>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-4 py-6 text-sm text-white/56 md:flex-row md:items-center md:justify-between">
-          <p>Copyright {currentYear} QaderAcademy. All rights reserved.</p>
-          <div className="flex flex-wrap gap-4">
-            <span aria-disabled="true">Privacy policy coming soon</span>
-            <span aria-disabled="true">Terms of use coming soon</span>
-          </div>
-        </div>
-      </div>
-    </footer>
-  );
-
   // ── Expired token UI ────────────────────────────────────────────────────────
   if (isExpired) {
     return (
-      <div className="flex min-h-screen flex-col bg-[#faf6f0] text-ink overflow-x-hidden">
-        {HeaderComponent}
+      <SiteChrome className="flex min-h-screen flex-col bg-[#faf6f0] text-ink overflow-x-hidden">
         <main className="relative flex-1 flex items-center justify-center px-4 pt-28 pb-16 overflow-hidden bg-[#fff7f3]">
           <div className="absolute -left-24 top-18 size-64 rounded-full bg-[#fee8df]" aria-hidden="true" />
           <div className="absolute right-8 top-24 grid grid-cols-4 gap-2 opacity-40" aria-hidden="true">
@@ -269,16 +166,14 @@ export function ResetPasswordPage() {
             </Card>
           </div>
         </main>
-        {FooterComponent}
-      </div>
+      </SiteChrome>
     );
   }
 
   // ── Success UI ──────────────────────────────────────────────────────────────
   if (isSuccess) {
     return (
-      <div className="flex min-h-screen flex-col bg-[#faf6f0] text-ink overflow-x-hidden">
-        {HeaderComponent}
+      <SiteChrome className="flex min-h-screen flex-col bg-[#faf6f0] text-ink overflow-x-hidden">
         <main className="relative flex-1 flex items-center justify-center px-4 pt-28 pb-16 overflow-hidden bg-[#fff7f3]">
           <div className="absolute -left-24 top-18 size-64 rounded-full bg-[#fee8df]" aria-hidden="true" />
           <div className="absolute right-8 top-24 grid grid-cols-4 gap-2 opacity-40" aria-hidden="true">
@@ -320,15 +215,13 @@ export function ResetPasswordPage() {
             </Card>
           </div>
         </main>
-        {FooterComponent}
-      </div>
+      </SiteChrome>
     );
   }
 
   // ── Form UI ─────────────────────────────────────────────────────────────────
   return (
-    <div className="flex min-h-screen flex-col bg-[#faf6f0] text-ink overflow-x-hidden">
-      {HeaderComponent}
+    <SiteChrome className="flex min-h-screen flex-col bg-[#faf6f0] text-ink overflow-x-hidden">
       <main className="relative flex-1 flex items-center justify-center px-4 pt-28 pb-16 overflow-hidden bg-[#fff7f3]">
         {/* Background decorative shapes */}
         <div className="absolute -left-24 top-18 size-64 rounded-full bg-[#fee8df]" aria-hidden="true" />
@@ -443,7 +336,6 @@ export function ResetPasswordPage() {
           </Card>
         </div>
       </main>
-      {FooterComponent}
-    </div>
+    </SiteChrome>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-import { SiteFooter, SiteHeader } from "../components/SiteChrome"
+import { SiteChrome } from "../components/SiteChrome"
 import { Badge, Button, Card, Spinner } from "../components/ui"
 import api from "../api/axios"
 import { useAuth } from "../hooks/useAuth"
@@ -42,8 +42,7 @@ function CatalogPage() {
 
 
     return (
-        <div className="min-h-screen bg-canvas-soft text-ink">
-            <SiteHeader />
+        <SiteChrome>
             <main className="min-h-screen pt-28 pb-16">
             <div className="page-container">
                 <div className="max-w-2xl">
@@ -116,8 +115,7 @@ function CatalogPage() {
                 )}
             </div>
             </main>
-            <SiteFooter sectionBasePath="/" />
-        </div>
+        </SiteChrome>
     )
 }
 

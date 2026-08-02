@@ -4,7 +4,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Star, BookOpen, Clock, Users } from 'lucide-react';
 import aboutTeacherImage from '../assets/about-teacher.webp';
 import heroLearnersImage from '../assets/hero-learners.webp';
-import { SiteFooter, SiteHeader } from '../components/SiteChrome';
+import { SiteChrome } from '../components/SiteChrome';
 import { Badge, Button, Modal } from '../components/ui';
 import { courses, type Course } from '../data/courses';
 import { cn } from '../lib/cn';
@@ -246,9 +246,7 @@ export function HomePage() {
   }, []);
 
   return (
-    <div ref={pageRef} className="min-h-screen overflow-x-hidden bg-canvas-soft text-ink">
-      <SiteHeader />
-
+    <SiteChrome ref={pageRef} className="min-h-screen overflow-x-hidden bg-canvas-soft text-ink">
       <main>
         <section className="relative overflow-hidden bg-[#fff7f3] pt-28">
           <div className="absolute -left-24 top-18 size-64 rounded-full bg-[#fee8df]" aria-hidden="true" />
@@ -450,8 +448,6 @@ export function HomePage() {
         </section>
       </main>
 
-      <SiteFooter />
-
       <Modal
         open={Boolean(selectedCourse)}
         onClose={() => setSelectedCourse(null)}
@@ -500,6 +496,6 @@ export function HomePage() {
           </div>
         ) : null}
       </Modal>
-    </div>
+    </SiteChrome>
   );
 }

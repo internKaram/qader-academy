@@ -1,5 +1,6 @@
+import { forwardRef, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from './ui';
+import { NavSignInButton } from './NavSignInButton';
 
 function sectionHref(basePath: string, id: string) {
   return `${basePath}#${id}`;
@@ -9,7 +10,33 @@ interface SiteFooterProps {
   sectionBasePath?: string;
 }
 
-export function SiteHeader() {
+interface SiteHeaderProps {
+  sectionBasePath?: string;
+}
+
+interface SiteChromeProps {
+  children: ReactNode;
+  className?: string;
+  footerSectionBasePath?: string;
+  headerSectionBasePath?: string;
+}
+
+export const SiteChrome = forwardRef<HTMLDivElement, SiteChromeProps>(function SiteChrome({
+  children,
+  className = 'min-h-screen bg-canvas-soft text-ink',
+  footerSectionBasePath,
+  headerSectionBasePath = '/',
+}: SiteChromeProps, ref) {
+  return (
+    <div ref={ref} className={className}>
+      <SiteHeader sectionBasePath={headerSectionBasePath} />
+      {children}
+      <SiteFooter sectionBasePath={footerSectionBasePath ?? headerSectionBasePath} />
+    </div>
+  );
+});
+
+export function SiteHeader({ sectionBasePath = '/' }: SiteHeaderProps) {
   return (
     <header className="fixed inset-x-0 top-0 z-40 bg-white/90 shadow-[0_10px_30px_rgb(18_24_38_/_0.06)] backdrop-blur-xl">
       <div className="page-container flex min-h-18 items-center justify-between gap-6">
@@ -17,27 +44,17 @@ export function SiteHeader() {
           QaderAcademy
         </Link>
         <nav className="hidden items-center gap-6 text-sm font-bold text-ink-soft md:flex" aria-label="Primary navigation">
-          <Link className="transition hover:text-brand-700" to="/#features">
+          <Link className="transition hover:text-brand-700" to={sectionHref(sectionBasePath, 'features')}>
             About
           </Link>
           <Link className="transition hover:text-brand-700" to="/courses">
             Courses
           </Link>
-          <Link className="transition hover:text-brand-700" to="#contact">
+          <Link className="transition hover:text-brand-700" to={sectionHref(sectionBasePath, 'contact')}>
             Contact
           </Link>
         </nav>
-        <Link to="/login">
-          <Button
-            size="sm"
-            style={{
-              backgroundColor: '#3b635a',
-              boxShadow: '0 4px 12px rgba(59, 99, 90, 0.3)',
-            }}
-          >
-            Sign In
-          </Button>
-        </Link>
+        <NavSignInButton />
       </div>
     </header>
   );

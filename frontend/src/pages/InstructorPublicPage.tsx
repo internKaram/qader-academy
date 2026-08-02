@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { BookOpen, CheckCircle2, Users } from 'lucide-react';
-import { SiteFooter, SiteHeader } from '../components/SiteChrome';
+import { SiteChrome } from '../components/SiteChrome';
 import { Badge, Button, Card } from '../components/ui';
 import { instructorCourses, instructorProfile } from '../data/instructorDashboard';
 
@@ -10,8 +10,7 @@ const totalLessons = publishedCourses.reduce((sum, course) => sum + course.lesso
 
 export function InstructorPublicPage() {
   return (
-    <div className="min-h-screen bg-canvas-soft text-ink">
-      <SiteHeader />
+    <SiteChrome>
       <main className="pt-28 pb-16">
         <section className="page-container">
           <div className="grid gap-8 lg:grid-cols-[1fr_22rem] lg:items-start">
@@ -97,7 +96,6 @@ export function InstructorPublicPage() {
           </div>
         </section>
       </main>
-      <SiteFooter sectionBasePath="/" />
-    </div>
+    </SiteChrome>
   );
 }
