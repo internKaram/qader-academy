@@ -1,6 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Badge, Button, Card, Input, Modal, Spinner, Table, type TableColumn } from '../components/ui';
-
+import { Card, Badge, Button, Input, Modal, Spinner, Table, type TableColumn } from '../components/ui';
 const buttonVariants = ['primary', 'secondary', 'outline', 'ghost', 'danger'] as const;
 const buttonSizes = ['sm', 'md', 'lg'] as const;
 const badgeVariants = ['neutral', 'brand', 'success', 'warning', 'danger', 'info', 'outline'] as const;
@@ -80,7 +79,7 @@ const progressColumns: TableColumn<ProgressRow>[] = [
   {
     key: 'progress',
     header: 'Progress',
-    accessor: (row) => (
+    accessor: (row: ProgressRow) => (
       <div className="flex min-w-40 items-center gap-3">
         <div className="h-2 flex-1 rounded-pill bg-canvas-warm">
           <div className="h-2 rounded-pill bg-brand-600" style={{ width: `${row.progress}%` }} />
