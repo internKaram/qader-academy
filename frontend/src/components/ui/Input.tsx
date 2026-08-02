@@ -86,3 +86,4 @@ export function Input(props: InputProps) {
     </div>
   );
 }
+export default Input;

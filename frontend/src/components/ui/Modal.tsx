@@ -164,3 +164,4 @@ export function Modal({
     document.body,
   );
 }
+export default Modal;

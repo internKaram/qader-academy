@@ -1,14 +1,10 @@
-import { CardBody, CardFooter, CardHeader, CardRoot } from './Card';
-export { Badge } from './Badge';
-export { Button } from './Button';
-export { CardBody, CardFooter, CardHeader, CardRoot } from './Card';
-export { Input } from './Input';
-export { Modal } from './Modal';
-export { Spinner } from './Spinner';
-export { Table, type TableColumn } from './Table';
-
-export const Card = Object.assign(CardRoot, {
-  Header: CardHeader,
-  Body: CardBody,
-  Footer: CardFooter,
-});
+export { default as Badge } from './Badge';
+export { default as Button } from './Button';
+export { Card, CardHeader, CardBody, CardFooter } from './Card';
+export { ErrorBanner } from './ErrorBanner';
+export { default as Input } from './Input';
+export { default as LessonSidebar } from './LessonSidebar';
+export { default as Modal } from './Modal';
+export { default as ProgressBar } from './ProgressBar';
+export { default as Spinner } from './Spinner';
+export { default as Table, type TableColumn } from './Table';
