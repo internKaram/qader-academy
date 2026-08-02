@@ -1,7 +1,8 @@
-import { useState, type ReactNode } from 'react';
-import { Link, NavLink } from 'react-router-dom';
-import { BookOpen, LayoutDashboard, Menu, Plus, UserRound, X } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { BookOpen, ChevronDown, Eye, LayoutDashboard, LogOut, Menu, Plus, Repeat2, X } from 'lucide-react';
 import { instructorProfile } from '../../data/instructorDashboard';
+import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui';
 
 interface InstructorShellProps {
@@ -12,14 +13,21 @@ interface InstructorShellProps {
   children: ReactNode;
 }
 
+const instructorCoursesPath = '/instructor/courses';
+
 const navItems = [
-  { label: 'Overview', to: '/instructor', icon: LayoutDashboard, end: true },
-  { label: 'Courses', to: '/instructor/courses', icon: BookOpen, end: false },
-  { label: 'New Course', to: '/instructor/courses/new', icon: Plus, end: false },
-  { label: 'Profile', to: '/instructor#profile', icon: UserRound, end: false },
+  { label: 'Overview', to: '/instructor', icon: LayoutDashboard, isActive: (pathname: string) => pathname === '/instructor' },
+  {
+    label: 'Courses',
+    to: instructorCoursesPath,
+    icon: BookOpen,
+    isActive: (pathname: string) =>
+      pathname === instructorCoursesPath || (pathname.startsWith(`${instructorCoursesPath}/`) && pathname !== `${instructorCoursesPath}/new`),
+  },
+  { label: 'New Course', to: `${instructorCoursesPath}/new`, icon: Plus, isActive: (pathname: string) => pathname === `${instructorCoursesPath}/new` },
 ] as const;
 
-function navClassName({ isActive }: { isActive: boolean }) {
+function navClassName(isActive: boolean) {
   return [
     'inline-flex min-h-10 items-center gap-2 rounded-control px-3 text-sm font-bold transition',
     isActive ? 'bg-brand-50 text-brand-700 ring-1 ring-brand-200' : 'text-ink-soft hover:bg-canvas-warm hover:text-ink',
@@ -28,6 +36,48 @@ function navClassName({ isActive }: { isActive: boolean }) {
 
 export function InstructorShell({ eyebrow = 'Instructor workspace', title, description, action, children }: InstructorShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!profileMenuOpen) {
+      return undefined;
+    }
+
+    function closeOnPointerDown(event: PointerEvent) {
+      if (!profileMenuRef.current?.contains(event.target as Node)) {
+        setProfileMenuOpen(false);
+      }
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setProfileMenuOpen(false);
+      }
+    }
+
+    window.addEventListener('pointerdown', closeOnPointerDown);
+    window.addEventListener('keydown', closeOnEscape);
+
+    return () => {
+      window.removeEventListener('pointerdown', closeOnPointerDown);
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [profileMenuOpen]);
+
+  function handleSwapAccount() {
+    window.localStorage.removeItem('token');
+    setProfileMenuOpen(false);
+    navigate('/login');
+  }
+
+  function handleSignOut() {
+    setProfileMenuOpen(false);
+    logout();
+  }
 
   return (
     <div className="min-h-screen bg-canvas-soft text-ink">
@@ -41,46 +91,106 @@ export function InstructorShell({ eyebrow = 'Instructor workspace', title, descr
             <nav className="hidden items-center gap-2 lg:flex" aria-label="Instructor navigation">
               {navItems.map((item) => {
                 const Icon = item.icon;
+                const isActive = item.isActive(pathname);
                 return (
-                  <NavLink className={navClassName} end={item.end} key={item.to} to={item.to}>
+                  <Link aria-current={isActive ? 'page' : undefined} className={navClassName(isActive)} key={item.to} to={item.to}>
                     <Icon className="size-4" />
                     {item.label}
-                  </NavLink>
+                  </Link>
                 );
               })}
             </nav>
 
-            <div className="hidden items-center gap-3 lg:flex">
-              <span className="grid size-10 place-items-center rounded-full bg-brand-50 text-sm font-black text-brand-700">
-                {instructorProfile.avatarInitials}
-              </span>
-              <div className="text-right">
-                <p className="text-sm font-bold text-ink">{instructorProfile.name}</p>
-                <p className="text-xs font-semibold text-ink-muted">{instructorProfile.role}</p>
-              </div>
+            <div ref={profileMenuRef} className="relative hidden lg:block">
+              <button
+                aria-expanded={profileMenuOpen}
+                aria-haspopup="menu"
+                className="inline-flex min-h-12 items-center gap-3 rounded-control px-2 py-1.5 text-left transition hover:bg-canvas-warm focus-visible:outline-brand-600/45"
+                onClick={() => setProfileMenuOpen((open) => !open)}
+                type="button"
+              >
+                <span className="grid size-10 place-items-center rounded-full bg-brand-50 text-sm font-black text-brand-700">
+                  {instructorProfile.avatarInitials}
+                </span>
+                <span className="text-right">
+                  <span className="block text-sm font-bold text-ink">{instructorProfile.name}</span>
+                  <span className="block text-xs font-semibold text-ink-muted">{instructorProfile.role}</span>
+                </span>
+                <ChevronDown className={['size-4 text-ink-muted transition', profileMenuOpen ? 'rotate-180' : ''].join(' ')} />
+              </button>
+
+              {profileMenuOpen ? (
+                <div
+                  className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-64 overflow-hidden rounded-control border border-line bg-white py-2 text-sm font-bold text-ink shadow-lift"
+                  role="menu"
+                >
+                  <Link
+                    className="flex items-center gap-3 px-4 py-3 transition hover:bg-canvas-warm"
+                    onClick={() => setProfileMenuOpen(false)}
+                    role="menuitem"
+                    to={instructorProfile.publicPath}
+                  >
+                    <Eye className="size-4 text-brand-700" />
+                    View public page
+                  </Link>
+                  <button
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-canvas-warm"
+                    onClick={handleSwapAccount}
+                    role="menuitem"
+                    type="button"
+                  >
+                    <Repeat2 className="size-4 text-ink-muted" />
+                    Swap account
+                  </button>
+                  <button
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-danger transition hover:bg-danger-light"
+                    onClick={handleSignOut}
+                    role="menuitem"
+                    type="button"
+                  >
+                    <LogOut className="size-4" />
+                    Sign out
+                  </button>
+                </div>
+              ) : null}
             </div>
 
-            <Button
-              aria-label={mobileMenuOpen ? 'Close instructor navigation' : 'Open instructor navigation'}
-              className="lg:hidden"
-              iconOnly
-              onClick={() => setMobileMenuOpen((open) => !open)}
-              size="sm"
-              variant="ghost"
-            >
-              {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-            </Button>
+            <div className="flex items-center gap-2 lg:hidden">
+              <Link
+                aria-label="View instructor public page"
+                className="grid size-9 place-items-center rounded-full bg-brand-50 text-sm font-black text-brand-700"
+                to={instructorProfile.publicPath}
+              >
+                {instructorProfile.avatarInitials}
+              </Link>
+              <Button
+                aria-label={mobileMenuOpen ? 'Close instructor navigation' : 'Open instructor navigation'}
+                iconOnly
+                onClick={() => setMobileMenuOpen((open) => !open)}
+                size="sm"
+                variant="ghost"
+              >
+                {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+              </Button>
+            </div>
           </div>
 
           {mobileMenuOpen ? (
             <nav className="grid gap-2 border-t border-line py-3 lg:hidden" aria-label="Mobile instructor navigation">
               {navItems.map((item) => {
                 const Icon = item.icon;
+                const isActive = item.isActive(pathname);
                 return (
-                  <NavLink className={navClassName} end={item.end} key={item.to} onClick={() => setMobileMenuOpen(false)} to={item.to}>
+                  <Link
+                    aria-current={isActive ? 'page' : undefined}
+                    className={navClassName(isActive)}
+                    key={item.to}
+                    onClick={() => setMobileMenuOpen(false)}
+                    to={item.to}
+                  >
                     <Icon className="size-4" />
                     {item.label}
-                  </NavLink>
+                  </Link>
                 );
               })}
             </nav>

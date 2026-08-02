@@ -6,6 +6,7 @@ import CatalogPage from './pages/Catalog'
 import CourseDetailPage from "./pages/CourseDetailPage"
 import { ForgotPasswordPage } from "./pages/ForgotPasswordPage"
 import { ResetPasswordPage } from "./pages/ResetPasswordPage"
+import { InstructorPublicPage } from "./pages/InstructorPublicPage"
 import { LoginPage } from "./pages/LoginPage"
 import { RegisterPage } from "./pages/RegisterPage"
 import { InstructorCourseEditorPage } from "./pages/instructor/InstructorCourseEditorPage"
@@ -45,6 +46,7 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/instructors/maha-al-salem" element={<InstructorPublicPage />} />
         <Route path="/instructor" element={<InstructorOverviewPage />} />
         <Route path="/instructor/courses" element={<InstructorCoursesPage />} />
         <Route path="/instructor/courses/new" element={<InstructorCourseWizardPage />} />

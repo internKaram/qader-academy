@@ -6,6 +6,7 @@ export interface InstructorProfile {
   role: string;
   email: string;
   avatarInitials: string;
+  publicPath: string;
   bio: string;
 }
 
@@ -71,6 +72,7 @@ export const instructorProfile: InstructorProfile = {
   role: 'Instructor',
   email: 'maha.alsalem@qaderacademy.example',
   avatarInitials: 'MS',
+  publicPath: '/instructors/maha-al-salem',
   bio: 'Builds practical web courses with clear lessons, checks for understanding, and learner-friendly examples.',
 };
 
