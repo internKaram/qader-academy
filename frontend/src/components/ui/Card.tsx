@@ -1,9 +1,10 @@
+
 import type { HTMLAttributes, ReactNode } from 'react';
 import { cn } from '../../lib/cn';
-
+ 
 type CardVariant = 'surface' | 'elevated' | 'soft' | 'dark' | 'outline';
 type CardPadding = 'none' | 'sm' | 'md' | 'lg';
-
+ 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   variant?: CardVariant;
   padding?: CardPadding;
@@ -11,11 +12,11 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
   selected?: boolean;
   disabled?: boolean;
 }
-
+ 
 interface CardSectionProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
 }
-
+ 
 const variantClasses: Record<CardVariant, string> = {
   surface: 'border border-line bg-canvas text-ink',
   elevated: 'border border-transparent bg-canvas text-ink shadow-card',
@@ -23,14 +24,14 @@ const variantClasses: Record<CardVariant, string> = {
   dark: 'border border-line-dark bg-canvas-dark text-white shadow-lift',
   outline: 'border border-line-strong bg-transparent text-ink',
 };
-
+ 
 const paddingClasses: Record<CardPadding, string> = {
   none: 'p-0',
   sm: 'p-4',
   md: 'p-6',
   lg: 'p-8',
 };
-
+ 
 export function CardRoot({
   variant = 'surface',
   padding = 'md',
@@ -59,7 +60,7 @@ export function CardRoot({
     </div>
   );
 }
-
+ 
 export function CardHeader({ className, children, ...props }: CardSectionProps) {
   return (
     <div className={cn('mb-4 space-y-2', className)} {...props}>
@@ -67,7 +68,7 @@ export function CardHeader({ className, children, ...props }: CardSectionProps) 
     </div>
   );
 }
-
+ 
 export function CardBody({ className, children, ...props }: CardSectionProps) {
   return (
     <div className={cn('space-y-3', className)} {...props}>
@@ -75,7 +76,7 @@ export function CardBody({ className, children, ...props }: CardSectionProps) {
     </div>
   );
 }
-
+ 
 export function CardFooter({ className, children, ...props }: CardSectionProps) {
   return (
     <div className={cn('mt-5 flex flex-wrap items-center gap-3', className)} {...props}>
@@ -83,4 +84,11 @@ export function CardFooter({ className, children, ...props }: CardSectionProps) 
     </div>
   );
 }
+ 
 
+export const Card = Object.assign(CardRoot, {
+  Header: CardHeader,
+  Body: CardBody,
+  Footer: CardFooter,
+});
+ 

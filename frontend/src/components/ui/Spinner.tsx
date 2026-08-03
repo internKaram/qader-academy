@@ -1,20 +1,20 @@
 import type { HTMLAttributes } from 'react';
 import { cn } from '../../lib/cn';
-
+ 
 type SpinnerSize = 'sm' | 'md' | 'lg';
-
+ 
 interface SpinnerProps extends HTMLAttributes<HTMLSpanElement> {
   size?: SpinnerSize;
   label?: string;
   decorative?: boolean;
 }
-
+ 
 const sizeClasses: Record<SpinnerSize, string> = {
   sm: 'size-4 border-2',
   md: 'size-6 border-[3px]',
   lg: 'size-9 border-4',
 };
-
+ 
 export function Spinner({
   size = 'md',
   label = 'Loading',
@@ -31,7 +31,8 @@ export function Spinner({
     >
       <span
         className={cn(
-          'ui-spinner block rounded-full border-current border-r-transparent text-brand-600',
+        
+          'animate-spin rounded-full border-current border-r-transparent text-indigo-600',
           sizeClasses[size],
         )}
       />
@@ -39,3 +40,4 @@ export function Spinner({
     </span>
   );
 }
+export default Spinner;
