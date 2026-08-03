@@ -4,7 +4,7 @@ const cors = require('cors');
 const connectDB = require('./config/connectDatabase');
 const courseRouter = require('./routes/course-routes') 
 const lessonRouter = require('./routes/lesson-routes') 
-const authRoutes = require('./routes/auth-routes');
+
 
 const authRoutes = require('./routes/authRoutes');
 const certificateRoutes = require('./routes/certificateRoutes');
