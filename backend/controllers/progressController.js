@@ -1,12 +1,8 @@
+
 const mongoose = require('mongoose');
 const Progress = require('../models/Progress');
  
-/**
- * Computes completion percentage for a course.
- * Relies on Karam's Lesson model (mongoose.model('Lesson')) already being
- * registered elsewhere in the app — no direct file import needed since
- * Mongoose's model registry is process-wide.
- */
+
 const calculateCompletionPercentage = async (courseId, completedCount) => {
   const Lesson = mongoose.model('Lesson');
   const totalLessons = await Lesson.countDocuments({ course: courseId });
@@ -85,4 +81,31 @@ const getProgress = async (req, res) => {
   }
 };
  
-module.exports = { markLessonComplete, getProgress };
+
+const getCompletionStatus = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const studentId = req.query.student;
+ 
+    if (!studentId) {
+      return res.status(400).json({ message: 'student query param is required' });
+    }
+ 
+    const Lesson = mongoose.model('Lesson'); 
+    const [totalLessons, progress] = await Promise.all([
+      Lesson.countDocuments({ course: courseId }),
+      Progress.findOne({ student: studentId, course: courseId }),
+    ]);
+ 
+    const completedCount = progress ? progress.completedLessons.length : 0;
+    const allLessonsComplete = totalLessons > 0 && completedCount >= totalLessons;
+ 
+    return res.status(200).json({ allLessonsComplete, completedCount, totalLessons });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: 'Server error checking completion status', error: error.message });
+  }
+};
+ 
+module.exports = { markLessonComplete, getProgress, getCompletionStatus };

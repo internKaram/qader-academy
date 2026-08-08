@@ -37,9 +37,7 @@ export default App;
 
   return <HomePage />;
 
-import { BrowserRouter, Routes, Route } from "react-router-dom"
-import { HomePage } from './pages/HomePage'
-import { StyleGuidePage } from './pages/StyleGuidePage'
+
 import CatalogPage from './pages/Catalog'
 import CourseDetailPage from "./pages/CourseDetailPage"
 import { ForgotPasswordPage } from "./pages/ForgotPasswordPage"
