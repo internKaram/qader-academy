@@ -36,6 +36,15 @@ function HashScroll() {
     return () => window.cancelAnimationFrame(frame)
   }, [hash])
 
+
+import CatalogPage from './pages/Catalog'
+import CourseDetailPage from "./pages/CourseDetailPage"
+import { ForgotPasswordPage } from "./pages/ForgotPasswordPage"
+import { ResetPasswordPage } from "./pages/ResetPasswordPage"
+import { LoginPage } from "./pages/LoginPage"
+import { RegisterPage } from "./pages/RegisterPage"
+import CourseWizardPage from "./pages/CourseWizardPage"
+import LessonEditorPage from "./pages/LessonEditorPage"
   return null
 }
 

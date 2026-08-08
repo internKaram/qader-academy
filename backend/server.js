@@ -1,10 +1,11 @@
-require('dotenv').config();
+require('dotenv').config({ path: './backend/.env' });
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/connectDatabase');
 const courseRouter = require('./routes/course-routes') 
 const lessonRouter = require('./routes/lesson-routes') 
 const authRoutes = require('./routes/auth-routes');
+
 const certificateRoutes = require('./routes/certificateRoutes');
 
 const enrollmentRoutes = require('./routes/enrollmentRoutes');

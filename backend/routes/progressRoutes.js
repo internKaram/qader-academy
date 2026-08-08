@@ -1,5 +1,16 @@
+
 const express = require('express');
 const router = express.Router();
+ 
+const { markLessonComplete, getProgress, getCompletionStatus } = require('../controllers/progressController');
+const { protect } = require('../middleware/authMiddleware');
+ 
+router.post('/', protect, markLessonComplete);
+router.get('/:courseId', protect, getProgress);
+router.get('/:courseId/completion-status', protect, getCompletionStatus);
+ 
+module.exports = router;
+ 
 const { markLessonComplete, getProgress } = require('../controllers/progressController');
 const authMiddleware = require('../middlewares/auth-middleware');
 const rbacMiddleware = require('../middlewares/rbac-middleware');
