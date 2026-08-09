@@ -1,5 +1,6 @@
 import { useEffect } from "react"
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom"
+
 import CertificatesPage from "./pages/CertificatesPage"
 import CatalogPage from "./pages/Catalog"
 import CourseDetailPage from "./pages/CourseDetailPage"
@@ -12,15 +13,20 @@ import { NotFoundPage } from "./pages/NotFoundPage"
 import { RegisterPage } from "./pages/RegisterPage"
 import { ResetPasswordPage } from "./pages/ResetPasswordPage"
 import { StyleGuidePage } from "./pages/StyleGuidePage"
+
 // Dashboard is currently JavaScript; it is intentionally used until it is migrated to TypeScript.
 // @ts-expect-error No declaration file exists for Dashboard.jsx.
 import Dashboard from "./pages/Dashboard"
+
 import { InstructorCourseEditorPage } from "./pages/instructor/InstructorCourseEditorPage"
 import { InstructorCourseStudentsPage } from "./pages/instructor/InstructorCourseStudentsPage"
 import { InstructorCourseWizardPage } from "./pages/instructor/InstructorCourseWizardPage"
 import { InstructorCoursesPage } from "./pages/instructor/InstructorCoursesPage"
 import { InstructorOverviewPage } from "./pages/instructor/InstructorOverviewPage"
 import { InstructorQuizBuilderPage } from "./pages/instructor/InstructorQuizBuilderPage"
+
+// admin page resolved by Eng. Salem
+import AdminDashboard from "./pages/adminDashboard"
 
 function HashScroll() {
   const { hash } = useLocation()
@@ -35,17 +41,6 @@ function HashScroll() {
 
     return () => window.cancelAnimationFrame(frame)
   }, [hash])
-
-
-import CatalogPage from './pages/Catalog'
-import CourseDetailPage from "./pages/CourseDetailPage"
-import { ForgotPasswordPage } from "./pages/ForgotPasswordPage"
-import { ResetPasswordPage } from "./pages/ResetPasswordPage"
-import { LoginPage } from "./pages/LoginPage"
-import { RegisterPage } from "./pages/RegisterPage"
-import CourseWizardPage from "./pages/CourseWizardPage"
-import LessonEditorPage from "./pages/LessonEditorPage"
-  return null
 }
 
 function App() {
@@ -56,6 +51,10 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/style-guide" element={<StyleGuidePage />} />
         <Route path="/dashboard" element={<Dashboard />} />
+
+        {/* admin page resolved by Eng. Salem*/}
+        <Route path="/admin" element={<AdminDashboard />} />
+
         <Route path="/certificates" element={<CertificatesPage />} />
         <Route path="/courses" element={<CatalogPage />} />
         <Route path="/courses/:courseId" element={<CourseDetailPage />} />

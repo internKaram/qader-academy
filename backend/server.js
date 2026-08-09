@@ -4,13 +4,14 @@ const cors = require('cors');
 const connectDB = require('./config/connectDatabase');
 const courseRouter = require('./routes/course-routes') 
 const lessonRouter = require('./routes/lesson-routes') 
-const authRoutes = require('./routes/auth-routes');
+
 
 const certificateRoutes = require('./routes/certificateRoutes');
 
 const enrollmentRoutes = require('./routes/enrollmentRoutes');
 const app = express();
 const progressRoutes = require('./routes/progressRoutes'); 
+const adminRoutes = require('./routes/admin-routes'); //انا اضفته
 // Connect to Database
 connectDB();
 
@@ -26,6 +27,7 @@ app.use('/api/v1/courses', courseRouter)
 app.use('/api/v1/courses', lessonRouter)
 app.use('/api/v1/enrollments', enrollmentRoutes);
 app.use('/api/v1/progress', progressRoutes);
+app.use('/api/v1/admin', adminRoutes); //اضفته انا
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
