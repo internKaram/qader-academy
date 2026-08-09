@@ -1,46 +1,111 @@
+
+const mongoose = require('mongoose');
 const Progress = require('../models/Progress');
  
 
-exports.markLessonComplete = async (req, res) => {
-  try {
-    const { enrollmentId, lessonId } = req.body;
+const calculateCompletionPercentage = async (courseId, completedCount) => {
+  const Lesson = mongoose.model('Lesson');
+  const totalLessons = await Lesson.countDocuments({ course: courseId });
+  if (totalLessons === 0) return 0;
+  return Math.round((completedCount / totalLessons) * 100);
+};
  
-    if (!enrollmentId || !lessonId) {
-      return res.status(400).json({ message: 'missingEnrollmentIdOrLessonId' });
+// @route   POST /api/v1/progress
+// @body    { courseId, lessonId }
+// @access  Private (student)
+const markLessonComplete = async (req, res) => {
+  try {
+    const { courseId, lessonId } = req.body;
+    if (!courseId || !lessonId) {
+      return res.status(400).json({ message: 'courseId and lessonId are required' });
     }
  
-    // upsert: calling this twice for the same lesson updates the same
-    // record instead of creating a duplicate (idempotent by design)
-    const progress = await Progress.findOneAndUpdate(
-      { enrollmentId, lessonId },
-      { percent: 100, lastAccessed: Date.now() },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+    const studentId = req.user._id;
+ 
+    let progress = await Progress.findOne({ student: studentId, course: courseId });
+    if (!progress) {
+      progress = await Progress.create({
+        student: studentId,
+        course: courseId,
+        completedLessons: [],
+      });
+    }
+ 
+    const alreadyCompleted = progress.completedLessons.some(
+      (entry) => entry.lesson.toString() === lessonId
     );
  
-    res.status(200).json(progress);
-  } catch (error) {
-    res.status(500).json({ message: 'error server', error: error.message });
-  }
-};
- 
-// @route  GET /api/v1/progress?enrollmentId=...
-// @desc   Get all completed-lesson records for one enrollment
-// @access Private
-exports.getProgress = async (req, res) => {
-  try {
-    const { enrollmentId } = req.query;
- 
-    if (!enrollmentId) {
-      return res.status(400).json({ message: 'missingEnrollmentId' });
+    if (!alreadyCompleted) {
+      progress.completedLessons.push({ lesson: lessonId, completedAt: new Date() });
+      await progress.save();
     }
  
-    const progress = await Progress.find({ enrollmentId });
+    const completionPercentage = await calculateCompletionPercentage(
+      courseId,
+      progress.completedLessons.length
+    );
  
-    res.status(200).json({
-      count: progress.length,
-      progress,
+    return res.status(200).json({
+      courseId,
+      completedLessons: progress.completedLessons,
+      completionPercentage,
+      alreadyCompleted, // lets the frontend skip a redundant "lesson complete" toast
     });
   } catch (error) {
-    res.status(500).json({ message: 'error server', error: error.message });
+    return res.status(500).json({ message: 'Server error updating progress', error: error.message });
   }
 };
+ 
+// @route   GET /api/v1/progress/:courseId
+// @access  Private (student)
+const getProgress = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const studentId = req.user._id;
+ 
+    const progress = await Progress.findOne({ student: studentId, course: courseId });
+    const completedLessons = progress ? progress.completedLessons : [];
+ 
+    const completionPercentage = await calculateCompletionPercentage(
+      courseId,
+      completedLessons.length
+    );
+ 
+    return res.status(200).json({
+      courseId,
+      completedLessons,
+      completionPercentage,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error fetching progress', error: error.message });
+  }
+};
+ 
+
+const getCompletionStatus = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const studentId = req.query.student;
+ 
+    if (!studentId) {
+      return res.status(400).json({ message: 'student query param is required' });
+    }
+ 
+    const Lesson = mongoose.model('Lesson'); 
+    const [totalLessons, progress] = await Promise.all([
+      Lesson.countDocuments({ course: courseId }),
+      Progress.findOne({ student: studentId, course: courseId }),
+    ]);
+ 
+    const completedCount = progress ? progress.completedLessons.length : 0;
+    const allLessonsComplete = totalLessons > 0 && completedCount >= totalLessons;
+ 
+    return res.status(200).json({ allLessonsComplete, completedCount, totalLessons });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: 'Server error checking completion status', error: error.message });
+  }
+};
+ 
+module.exports = { markLessonComplete, getProgress, getCompletionStatus };

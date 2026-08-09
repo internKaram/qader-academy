@@ -79,7 +79,7 @@ export function Button({
         </span>
       ) : null}
 
-      <span className={cn('inline-flex items-center justify-center gap-inherit', loading && 'invisible')}>
+      <span className={cn('inline-flex items-center justify-center gap-[inherit]', loading && 'invisible')}>
         {leadingIcon ? <span aria-hidden="true">{leadingIcon}</span> : null}
         {!iconOnly ? <span>{children}</span> : children}
         {trailingIcon ? <span aria-hidden="true">{trailingIcon}</span> : null}
@@ -87,3 +87,4 @@ export function Button({
     </button>
   );
 }
+export default Button;

@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
  
-// Matches Faisal's AUTH contract: JWT is stored in localStorage under this
-// key by the login flow (SRS 3.4: "JWT stored in localStorage"). Update
-// this constant if his login code uses a different key name.
+
 const TOKEN_KEY = 'token';
  
 export interface AuthUser {
@@ -20,13 +18,7 @@ interface UseAuthResult {
   logout: () => void;
 }
  
-/**
- * Decodes a JWT payload WITHOUT verifying its signature. This is safe here
- * because we're only reading claims to render UI (name, role) — the
- * backend is the one that verifies the signature on every protected
- * request. Never trust this decoded payload for access-control decisions
- * on the frontend.
- */
+
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
   try {
     const payload = token.split('.')[1];

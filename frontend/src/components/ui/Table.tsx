@@ -144,3 +144,4 @@ export function Table<T extends object>({
     </div>
   );
 }
+export default Table;

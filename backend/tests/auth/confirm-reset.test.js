@@ -3,7 +3,7 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const { MongoMemoryServer } = require("mongodb-memory-server");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 
 // --- Environment -----------------------------------------------------------
 process.env.JWT_SECRET = "test-secret-confirm-reset";

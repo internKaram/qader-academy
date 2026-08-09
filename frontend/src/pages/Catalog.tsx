@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
+import { SiteChrome } from "../components/SiteChrome"
 import { Badge, Button, Card, Spinner } from "../components/ui"
 import api from "../api/axios"
 import { useAuth } from "../hooks/useAuth"
@@ -19,7 +20,7 @@ function CatalogPage() {
             try {
                 const response = await api.get<Course[]>("/courses")
                 setCourses(response.data)
-            } catch (err) {
+            } catch {
                 setError("Failed to load courses")
             } finally {
                 setLoading(false)
@@ -41,19 +42,13 @@ function CatalogPage() {
 
 
     return (
-        <main className="min-h-screen bg-canvas-soft py-10 text-ink">
+        <SiteChrome>
+            <main className="min-h-screen pt-28 pb-16">
             <div className="page-container">
-                <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-                    <div className="max-w-2xl">
-                        <p className="eyebrow">Catalog</p>
-                        <h1 className="mt-3 font-display text-heading-lg">Browse all courses.</h1>
-                        <p className="mt-4 body-copy">Explore every published course on QaderAcademy.</p>
-                    </div>
-                    {canCreateCourses && (
-                        <Link to="/instructor/courses/new">
-                            <Button>Create new course</Button>
-                        </Link>
-                    )}
+                <div className="max-w-2xl">
+                    <p className="eyebrow">Catalog</p>
+                    <h1 className="mt-3 font-display text-heading-lg">Browse all courses.</h1>
+                    <p className="mt-4 body-copy">Explore every published course on QaderAcademy.</p>
                 </div>
 
                 {loading ? (
@@ -119,7 +114,8 @@ function CatalogPage() {
                     </div>
                 )}
             </div>
-        </main>
+            </main>
+        </SiteChrome>
     )
 }
 
