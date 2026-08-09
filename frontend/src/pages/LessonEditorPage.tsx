@@ -21,6 +21,7 @@ interface LessonRowProps {
 }
 
 function SortableLessonRow({ lesson, onSave, onDelete }: LessonRowProps) {
+    console.log("EDITOR PAGE IS RENDERED")
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: lesson._id })
     const [title, setTitle] = useState(lesson.title)
     const [contentUrl, setContentUrl] = useState(lesson.contentUrl)
@@ -103,6 +104,7 @@ function SortableLessonRow({ lesson, onSave, onDelete }: LessonRowProps) {
 
 function LessonEditorPage() {
     const { courseId } = useParams<{ courseId: string }>()
+    console.log(courseId);
     const navigate = useNavigate()
     const { user } = useAuth()
 

@@ -22,6 +22,13 @@ import { InstructorCoursesPage } from "./pages/instructor/InstructorCoursesPage"
 import { InstructorOverviewPage } from "./pages/instructor/InstructorOverviewPage"
 import { InstructorQuizBuilderPage } from "./pages/instructor/InstructorQuizBuilderPage"
 
+<<<<<<< Updated upstream
+=======
+// admin page resolved by Eng. Salem
+import AdminDashboard from "./pages/adminDashboard"
+import LessonEditorPage from "./pages/LessonEditorPage"
+
+>>>>>>> Stashed changes
 function HashScroll() {
   const { hash } = useLocation()
 
@@ -62,6 +69,7 @@ function App() {
         <Route path="/instructor/courses/:courseId/edit" element={<InstructorCourseEditorPage />} />
         <Route path="/instructor/courses/:courseId/quiz" element={<InstructorQuizBuilderPage />} />
         <Route path="/instructor/courses/:courseId/students" element={<InstructorCourseStudentsPage />} />
+        <Route path="/instructor/courses/:courseId/lessons" element={<LessonEditorPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>

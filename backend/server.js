@@ -1,4 +1,8 @@
+<<<<<<< Updated upstream
 require('dotenv').config();
+=======
+require('dotenv').config() 
+>>>>>>> Stashed changes
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/connectDatabase');
@@ -6,7 +10,7 @@ const courseRouter = require('./routes/course-routes')
 const lessonRouter = require('./routes/lesson-routes') 
 const authRoutes = require('./routes/auth-routes');
 const certificateRoutes = require('./routes/certificateRoutes');
-
+const authRoutes = require("./routes/authRoutes")
 const enrollmentRoutes = require('./routes/enrollmentRoutes');
 const app = express();
 const progressRoutes = require('./routes/progressRoutes'); 
