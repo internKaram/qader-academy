@@ -23,9 +23,11 @@ const createNewLesson = asyncHandler(async (request, response) => {
         return response.status(403).json({ message: "Not authorized to add lessons to this course" })
     }
 
-    const duplicate = await Lesson.findOne({title}).lean().exec()
-    if(duplicate){
-        return response.status(409).json({message: "Title already exists"})
+    // Scoped to this course only — "Lesson 1" is a totally reasonable title
+    // to reuse across different courses, just not twice within the same one
+    const duplicate = await Lesson.findOne({ title, courseId }).lean().exec()
+    if (duplicate) {
+        return response.status(409).json({ message: "This course already has a lesson with this title" })
     }
 
 
