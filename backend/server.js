@@ -11,7 +11,7 @@ const certificateRoutes = require('./routes/certificateRoutes');
 const authRoutes = require('./routes/authRoutes');
 const enrollmentRoutes = require('./routes/enrollmentRoutes');
 const progressRoutes = require('./routes/progressRoutes');
-const adminRoutes = require('./routes/admin-routes'); 
+const adminRoutes = require('./routes/admin-routes'); // your addition
 
 const app = express();
 
@@ -32,14 +32,14 @@ app.use('/api/v1/courses', lessonRouter);
 app.use('/api/v1/enrollments', enrollmentRoutes);
 app.use('/api/v1/progress', progressRoutes);
 
-app.use('/api/v1/admin', adminRoutes); // your addition
+app.use('/api/v1/admin', adminRoutes);
 
 app.get('/', (req, res) => {
-  res.send('API is running...');
+  res.send('API is running...');
 });
 
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
