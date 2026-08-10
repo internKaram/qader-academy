@@ -1,25 +1,39 @@
 const express = require('express');
 const router = express.Router();
-<<<<<<< Updated upstream
-const { markLessonComplete, getProgress } = require('../controllers/progressController');
-=======
- 
-const { markLessonComplete, getProgress, getCompletionStatus } = require('../controllers/progressController');
-const { protect } = require('../middleware/authMiddleware');
- 
-router.post('/', protect, markLessonComplete);
-router.get('/:courseId', protect, getProgress);
-router.get('/:courseId/completion-status', protect, getCompletionStatus);
- 
-module.exports = router;
- 
->>>>>>> Stashed changes
+
+// Controllers
+const {
+  markLessonComplete,
+  getProgress,
+  getCompletionStatus
+} = require('../controllers/progressController');
+
+// New unified middlewares (replace protect everywhere)
 const authMiddleware = require('../middlewares/auth-middleware');
 const rbacMiddleware = require('../middlewares/rbac-middleware');
 
-router
-  .route('/')
-  .post(authMiddleware, rbacMiddleware('student'), markLessonComplete) // POST /api/v1/progress
-  .get(authMiddleware, rbacMiddleware('student'), getProgress);         // GET  /api/v1/progress?enrollmentId=...
+// POST /api/v1/progress
+router.post(
+  '/',
+  authMiddleware,
+  rbacMiddleware('student'),
+  markLessonComplete
+);
+
+// GET /api/v1/progress/:courseId
+router.get(
+  '/:courseId',
+  authMiddleware,
+  rbacMiddleware('student'),
+  getProgress
+);
+
+// GET /api/v1/progress/:courseId/completion-status
+router.get(
+  '/:courseId/completion-status',
+  authMiddleware,
+  rbacMiddleware('student'),
+  getCompletionStatus
+);
 
 module.exports = router;
