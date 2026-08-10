@@ -8,15 +8,12 @@ const {
   suspendUser 
 } = require('../controllers/admin-controller');
 
-// تحققي من وجود ملف الـ auth أو استبدليه مؤقتاً بدالة تحقق محلية لمنع الـ Crash
 const authMiddleware = require('../middlewares/auth-middleware');
-const protect = authMiddleware.protect || authMiddleware; 
-
 const rbacMiddleware = require('../middlewares/rbac-middleware');
 
-// حماية المسارات بشكل مضمون 100%
-if (protect) router.use(protect);
-if (rbacMiddleware) router.use(rbacMiddleware('admin'));
+// Protect all admin routes with authentication and RBAC
+router.use(authMiddleware);
+router.use(rbacMiddleware('admin'));
 
 router.get('/stats', getAdminStats);
 router.get('/users', getAdminUsers);
