@@ -13,9 +13,8 @@ import { NotFoundPage } from "./pages/NotFoundPage"
 import { RegisterPage } from "./pages/RegisterPage"
 import { ResetPasswordPage } from "./pages/ResetPasswordPage"
 import { StyleGuidePage } from "./pages/StyleGuidePage"
-
+import CourseWizardPage from "./pages/CourseWizardPage"
 // Dashboard is currently JavaScript; it is intentionally used until it is migrated to TypeScript.
-// @ts-expect-error No declaration file exists for Dashboard.jsx.
 import Dashboard from "./pages/Dashboard"
 
 import { InstructorCourseEditorPage } from "./pages/instructor/InstructorCourseEditorPage"
@@ -73,15 +72,15 @@ export default function App() {
         <Route path="/instructor/course/:courseId/students" element={<InstructorCourseStudentsPage />} />
         <Route path="/instructor/course/:courseId/wizard" element={<InstructorCourseWizardPage />} />
         <Route path="/instructor/course/:courseId/quiz" element={<InstructorQuizBuilderPage />} />
-
+        {/* Course authoring wizard (Karam) */}
+        <Route path="/instructor/courses/new" element={<CourseWizardPage />} />
+        <Route path="/instructor/courses/:courseId/edit" element={<CourseWizardPage />} />
+        <Route path="/instructor/courses/:courseId/lessons" element={<LessonEditorPage />} />
         {/* Public instructor page */}
         <Route path="/instructor/:instructorId" element={<InstructorPublicPage />} />
 
         {/* Admin page */}
         <Route path="/admin" element={<AdminDashboard />} />
-
-        {/* Lesson editor (added by Karam) */}
-        <Route path="/lesson-editor" element={<LessonEditorPage />} />
 
         {/* Forbidden & Not Found */}
         <Route path="/forbidden" element={<ForbiddenPage />} />
