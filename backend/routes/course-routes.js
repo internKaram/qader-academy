@@ -12,6 +12,10 @@ router.route("/")
     .get(courseController.getAllCourses)
     .post(authMiddleware, rbacMiddleware("instructor", "admin"), courseController.createNewCourse)
 
+
+router.route("/mine")
+    .get(authMiddleware, rbacMiddleware("instructor", "admin"), courseController.getMyCourses) // for instructor's own courses
+
 router.route("/:courseId")
     .get(courseController.getSpecificCourse)
     .patch(authMiddleware, rbacMiddleware("instructor", "admin"), courseController.updateCourse)

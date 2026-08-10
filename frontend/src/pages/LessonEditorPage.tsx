@@ -21,6 +21,7 @@ interface LessonRowProps {
 }
 
 function SortableLessonRow({ lesson, onSave, onDelete }: LessonRowProps) {
+    console.log("EDITOR PAGE IS RENDERED")
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: lesson._id })
     const [title, setTitle] = useState(lesson.title)
     const [contentUrl, setContentUrl] = useState(lesson.contentUrl)
@@ -103,6 +104,7 @@ function SortableLessonRow({ lesson, onSave, onDelete }: LessonRowProps) {
 
 function LessonEditorPage() {
     const { courseId } = useParams<{ courseId: string }>()
+    console.log(courseId);
     const navigate = useNavigate()
     const { user } = useAuth()
 
@@ -178,7 +180,10 @@ function LessonEditorPage() {
         const oldIndex = lessons.findIndex((l) => l._id === active.id)
         const newIndex = lessons.findIndex((l) => l._id === over.id)
         const reordered = arrayMove(lessons, oldIndex, newIndex)
-        setLessons(reordered) // optimistic update
+
+        // Snapshot the pre-drag order so we can restore it if the save fails
+        const previousLessons = lessons
+        setLessons(reordered) // optimistic update — UI reflects the new order immediately
 
         const payload = reordered.map((lesson, index) => ({
             lessonId: lesson._id,
@@ -188,7 +193,9 @@ function LessonEditorPage() {
         try {
             await api.patch(`/courses/${courseId}/lessons/reorder`, { lessons: payload })
         } catch {
-            setError("Failed to save new order. Refresh to see the actual saved order.")
+            // Roll back rather than leaving the UI showing an order that was never actually saved
+            setLessons(previousLessons)
+            setError("Failed to save new order. Your previous order has been restored.")
         }
     }
 
