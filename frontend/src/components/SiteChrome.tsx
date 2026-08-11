@@ -47,7 +47,7 @@ export function SiteHeader({ sectionBasePath = '/' }: SiteHeaderProps) {
           <Link className="transition hover:text-brand-700" to={sectionHref(sectionBasePath, 'features')}>
             About
           </Link>
-          <Link className="transition hover:text-brand-700" to="/courses">
+          <Link className="transition hover:text-brand-700" to="/catalog">
             Courses
           </Link>
           <Link className="transition hover:text-brand-700" to={sectionHref(sectionBasePath, 'contact')}>

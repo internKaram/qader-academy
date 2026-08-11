@@ -5,16 +5,27 @@ import { Badge, Button, Card, Spinner } from "../components/ui"
 import api from "../api/axios"
 import { useAuth } from "../hooks/useAuth"
 import type { Course } from "../types/course"
+<<<<<<< Updated upstream
 import { ArrowLeft } from "lucide-react"
 import { Trash2 } from "lucide-react"
+=======
+import { Pen, Trash2 } from "lucide-react"
+import { BookOpen, ChevronDown, Eye, LayoutDashboard, LogOut, Menu, Plus, Repeat2, X } from 'lucide-react';
+>>>>>>> Stashed changes
 
 function CatalogPage() {
     const [courses, setCourses] = useState<Course[]>([])
     const [loading, setLoading] = useState<boolean>(true)
     const [error, setError] = useState<string | null>(null)
     const { user } = useAuth()
+<<<<<<< Updated upstream
     const canCreateCourses = user?.role === "instructor" || user?.role === "admin"
 
+=======
+function navigateTo(path: string) {
+  window.location.href = path;
+}
+>>>>>>> Stashed changes
 
     useEffect(() => {
         const fetchCourses = async () => {
@@ -61,12 +72,25 @@ function CatalogPage() {
     return (
         <SiteChrome>
             <main className="min-h-screen pt-28 pb-16">
+                
             <div className="page-container">
                 <div className="max-w-2xl">
                     <p className="eyebrow">Catalog</p>
                     <h1 className="mt-3 font-display text-heading-lg">Browse all courses.</h1>
                     <p className="mt-4 body-copy">Explore every published course on QaderAcademy.</p>
+                    
                 </div>
+                    <div className="flex flex-col gap-3 sm:flex-row lg:justify-end" data-animate-item>
+                            {(user?.role === "instructor" || user?.role === "admin") && (
+
+                        <Link to="/instructor/courses/new">
+                            <Button size="lg" variant="create" >
+                            Create a course
+                            </Button>
+                        </Link>
+                        )}
+                        </div>
+                            
 
                 {loading ? (
                     <div className="mt-10 flex justify-center">
@@ -94,7 +118,7 @@ function CatalogPage() {
                                             {!course.isPublished ? (
                                                 <Badge variant="warning">Draft</Badge>
                                             ) : isOwner ? (
-                                                <Badge variant="brand">Your course</Badge>
+                                                <Badge variant="info">Your course</Badge>
                                             ) : null}
                                         </div>
                                         </div>
@@ -106,15 +130,27 @@ function CatalogPage() {
                                         </p>
                                     </Card.Body>
                                     <Card.Footer className="mt-auto flex-wrap items-center justify-between gap-2">
-                                        <p className="font-display text-xl font-black text-ink">{course.price} SAR</p>
+                                        <p className="font-display text-xl font-black text-ink">
+                                            {course.price === 0 ? (
+                                                <Badge variant="free">FREE</Badge>
+                                            ) : (<p className="font-display text-xl font-black text-ink">
+                                                    {course.price} SAR
+                                                </p>)} 
+                                            
+                                        </p>
+                                            
                                         <div className="flex flex-wrap gap-2">
                                             {isOwner && (
                                                 <>
                                                     <Link to={`/instructor/courses/${course._id}/edit`}>
-                                                        <Button size="sm" variant="ghost">Edit</Button>
+                                                        <Button className="addLesson-buttonTitle"size="sm" variant="outline" title="Edit Lesson">
+                                                            <Pen className="size-4"  />
+                                                        </Button>
                                                     </Link>
                                                     <Link to={`/instructor/courses/${course._id}/lessons`}>
-                                                        <Button size="sm" variant="ghost">Add lessons</Button>
+                                                  <Button className="addLesson-buttonTitle"size="sm" variant="outline" title="Add Lesson">
+                                                        <Plus className="size-4" />
+                                                    </Button>
                                                     </Link>
                                                     <Button
                                                         size="sm"
@@ -126,7 +162,7 @@ function CatalogPage() {
                                                     </Button>
                                                 </>
                                             )}
-                                            <Link to={`/courses/${course._id}`}>
+                                            <Link to={`/instructor/courses/${course._id}`}>
                                                 <Button size="sm" variant="outline">View course</Button>
                                             </Link>
                                         </div>

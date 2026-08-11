@@ -36,18 +36,16 @@ const getSpecificCourse = asyncHandler(async (request, response) => {
 const createNewCourse = asyncHandler(async (request, response) => {
     console.log(request.user)
     console.log(request.instructorId)
-    const {title, description, category, price} = request.body
-    if(!title || !description || !category || !price){
+    const {title, description, category, price, thumbnail, isPublished} = request.body
+    if(!title || !description || !category || price===undefined){
         return response.status(400).json({message: "Please fill all required fields"})
     }
 
-    // Scoped to this instructor only — two different instructors can use the same
-    // course title; we're just preventing one instructor from duplicating their own
     const duplicate = await Course.findOne({ title, instructorId: request.user.userId }).lean().exec()
     if (duplicate) {
         return response.status(409).json({ message: "You already have a course with this title" })
     }
-    const courseObject = {title, description, category, price, instructorId: request.user.userId}
+    const courseObject = {title, description, category, price, instructorId: request.user.userId, thumbnail, isPublished: Boolean(isPublished)}
 
     const course = await Course.create(courseObject)
     if(course){

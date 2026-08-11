@@ -65,7 +65,7 @@ function SortableLessonRow({ lesson, onSave, onDelete }: LessonRowProps) {
                 <div className="grid flex-1 gap-3 sm:grid-cols-[2fr_2fr_1fr]">
                     <Input
                         id={`title-${lesson._id}`}
-                        label="Title"
+                        label="Lesson title"
                         value={title}
                         onChange={(e) => { setTitle(e.target.value); markDirty() }}
                     />
@@ -219,7 +219,7 @@ function LessonEditorPage() {
     return (
         <main className="min-h-screen bg-canvas-soft py-10 text-ink">
             <div className="page-container max-w-3xl">
-                <Link to={`/courses/${courseId}`} className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-ink-soft transition hover:text-brand-700">
+                <Link to={`/instructor/courses/${courseId}`} className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-ink-soft transition hover:text-brand-700">
                     <ArrowLeft className="size-4" />
                     Back to course
                 </Link>
@@ -243,15 +243,39 @@ function LessonEditorPage() {
                     </SortableContext>
                 </DndContext>
 
-                <Card variant="soft" className="mt-8">
+                <Card variant="soft" className="mt-12">
                     <Card.Header>
                         <h3 className="font-display text-heading-sm">Add a new lesson</h3>
                     </Card.Header>
                     <Card.Body>
                         <div className="grid gap-3 sm:grid-cols-[2fr_2fr_1fr]">
-                            <Input id="new-title" label="Title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
-                            <Input id="new-url" label="Content URL" value={newContentUrl} onChange={(e) => setNewContentUrl(e.target.value)} />
-                            <Input id="new-duration" label="Duration (min)" type="number" value={newDuration} onChange={(e) => setNewDuration(e.target.value)} />
+                            <Input
+                                id="new-title"
+                                label="Lesson title"
+                                hint="Give the lesson a short, descriptive name."
+                                placeholder="e.g. Setting up your development environment"
+                                value={newTitle}
+                                onChange={(e) => setNewTitle(e.target.value)}
+                            />
+
+                            <Input
+                                id="new-url"
+                                label="Content URL"
+                                hint="Paste the link students should use to access this lesson's content."
+                                placeholder="https://..."
+                                value={newContentUrl}
+                                onChange={(e) => setNewContentUrl(e.target.value)}
+                            />
+
+                            <Input
+                                id="new-duration"
+                                label="Duration (min)"
+                                type="number"
+                                hint="Enter the estimated number of minutes students need to complete this lesson."
+                                placeholder="e.g. 20"
+                                value={newDuration}
+                                onChange={(e) => setNewDuration(e.target.value)}
+                            />
                         </div>
                     </Card.Body>
                     <Card.Footer>

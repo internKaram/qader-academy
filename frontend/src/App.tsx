@@ -73,7 +73,15 @@ export default function App() {
         <Route path="/instructor/course/:courseId/students" element={<InstructorCourseStudentsPage />} />
         <Route path="/instructor/course/:courseId/wizard" element={<InstructorCourseWizardPage />} />
         <Route path="/instructor/course/:courseId/quiz" element={<InstructorQuizBuilderPage />} />
+<<<<<<< Updated upstream
 
+=======
+        {/* Course authoring wizard (Karam) */}
+        <Route path="/instructor/courses/new" element={<CourseWizardPage />} />
+        <Route path="/instructor/courses/:courseId/" element={<CourseDetailPage/>} />
+        <Route path="/instructor/courses/:courseId/edit" element={<CourseWizardPage />} />
+        <Route path="/instructor/courses/:courseId/lessons" element={<LessonEditorPage />} />
+>>>>>>> Stashed changes
         {/* Public instructor page */}
         <Route path="/instructor/:instructorId" element={<InstructorPublicPage />} />
 

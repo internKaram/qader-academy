@@ -7,7 +7,7 @@ import { Link } from "react-router-dom"
 import { ArrowLeft } from "lucide-react"
 
 // inside the return, right after <div className="page-container max-w-3xl">
-<Link to="/courses" className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-ink-soft transition hover:text-brand-700">
+<Link to="/catalog" className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-ink-soft transition hover:text-brand-700">
     <ArrowLeft className="size-4" />
     Cancel and back to catalog
 </Link>
@@ -74,31 +74,34 @@ function CourseWizardPage() {
         return true
     }
 
-    async function handleSubmit() {
-        setSubmitting(true)
-        setError(null)
-        try {
-            const payload = {
-                title: draft.title,
-                description: draft.description,
-                category: draft.category,
-                price: Number(draft.price),
-                thumbnail: draft.thumbnail,
-            }
-            if (isEditMode) {
-                await api.patch(`/courses/${courseId}`, payload)
-            } else {
-                await api.post("/courses", payload)
-            }
-            clearDraft()
-            navigate("/courses")
-        } catch (err) {
-            setError("Failed to save course. Please check your fields and try again.")
-        } finally {
-            setSubmitting(false)
-        }
-    }
+  async function handleSubmit(isPublished: boolean) { // boolean set to true if "Publish Course" button is clicked, otherwise it will be a draft
+    setSubmitting(true)
+    setError(null)
 
+    try {
+        const payload = {
+            title: draft.title,
+            description: draft.description,
+            category: draft.category,
+            price: Number(draft.price),
+            thumbnail: draft.thumbnail,
+            isPublished,
+        }
+
+        if (isEditMode) {
+            await api.patch(`/courses/${courseId}`, payload)
+        } else {
+            await api.post("/courses", payload)
+        }
+
+        clearDraft()
+        navigate("/catalog")
+    } catch {
+        setError("Failed to save course. Please check your fields and try again.")
+    } finally {
+        setSubmitting(false)
+    }
+}
     if (loading) {
         return <main className="grid min-h-screen place-items-center bg-canvas-soft">Loading...</main>
     }
@@ -106,7 +109,7 @@ function CourseWizardPage() {
     return (
         <main className="min-h-screen bg-canvas-soft py-10 text-ink">
             <div className="page-container max-w-3xl">
-                <Link to="/courses" className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-ink-soft transition hover:text-brand-700">
+                <Link to="/catalog" className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-ink-soft transition hover:text-brand-700">
                 <ArrowLeft className="size-4" />
                 Cancel and back to catalog
                 </Link>
@@ -133,6 +136,8 @@ function CourseWizardPage() {
                                     id="wizard-title"
                                     label="Course title"
                                     required
+                                    hint="use a clear, specific name that tells students what they will learn"
+                                    placeholder="e.g. Introduction to Web Development"
                                     value={draft.title}
                                     onChange={(e) => updateField("title", e.target.value)}
                                 />
@@ -146,6 +151,8 @@ function CourseWizardPage() {
                                     label="Description"
                                     multiline
                                     required
+                                    hint="Briefly explain what this course offers and what students will gain from completing it."
+                                    placeholder="Describe the main topics, skills, and outcomes students can expect..."
                                     value={draft.description}
                                     onChange={(e) => updateField("description", e.target.value)}
                                 />
@@ -153,6 +160,8 @@ function CourseWizardPage() {
                                     id="wizard-category"
                                     label="Category"
                                     required
+                                    hint="Choose the category that best describes the course"
+                                    placeholder="e.g. Front-end, Back-end, AI"
                                     value={draft.category}
                                     onChange={(e) => updateField("category", e.target.value)}
                                 />
@@ -174,17 +183,29 @@ function CourseWizardPage() {
                                     label="Thumbnail URL"
                                     optional
                                     hint="Paste a link to an already-hosted image."
+                                    placeholder="https://example.com/course-thumbnail.jpg"
                                     value={draft.thumbnail}
                                     onChange={(e) => updateField("thumbnail", e.target.value)}
                                 />
                                 {draft.thumbnail && (
-                                    <img src={draft.thumbnail} alt="Thumbnail preview" className="h-40 rounded-control object-cover" />
+                                    <div className="space-y-2">
+                                        <p className="text-sm font-bold text-ink-soft">Preview</p>
+                                        <img
+                                            src={draft.thumbnail}
+                                            alt="Thumbnail preview"
+                                            className="h-40 rounded-control object-cover"
+                                        />
+                                    </div>
                                 )}
                             </div>
                         )}
 
                         {currentStep === 3 && (
                             <div className="space-y-3">
+                                <p className="text-sm text-ink-soft">
+                                    Review your course details before publishing. You can go back to any previous
+                                    step to make changes.
+                                </p>
                                 <p><span className="font-bold">Title:</span> {draft.title}</p>
                                 <p><span className="font-bold">Description:</span> {draft.description}</p>
                                 <p><span className="font-bold">Category:</span> {draft.category}</p>
@@ -192,26 +213,45 @@ function CourseWizardPage() {
                             </div>
                         )}
                     </Card.Body>
-
-                    <Card.Footer className="justify-between">
-                        <Button
-                            variant="outline"
-                            disabled={currentStep === 0}
-                            onClick={() => setCurrentStep((s) => s - 1)}
-                        >
-                            Back
-                        </Button>
-
-                        {currentStep < steps.length - 1 ? (
-                            <Button disabled={!canProceed()} onClick={() => setCurrentStep((s) => s + 1)}>
-                                Next
+                            <Card.Footer className="justify-between">
+                            <Button
+                                variant="outline"
+                                disabled={currentStep === 0}
+                                onClick={() => setCurrentStep((s) => s - 1)}
+                            >
+                                Back
                             </Button>
-                        ) : (
-                            <Button loading={submitting} onClick={handleSubmit}>
-                                {isEditMode ? "Save changes" : "Publish course"}
-                            </Button>
-                        )}
-                    </Card.Footer>
+
+                            {currentStep < steps.length - 1 ? (
+                                <Button
+                                    disabled={!canProceed()}
+                                    onClick={() => setCurrentStep((s) => s + 1)}
+                                >
+                                    Next
+                                </Button>
+                            ) : isEditMode ? (
+                                <Button loading={submitting} onClick={() => handleSubmit(false)}>
+                                    Save changes
+                                </Button>
+                            ) : (
+                                <div className="flex gap-3">
+                                    <Button
+                                        variant="outline"
+                                        loading={submitting}
+                                        onClick={() => handleSubmit(false)}
+                                    >
+                                        Save as draft
+                                    </Button>
+
+                                    <Button
+                                        loading={submitting}
+                                        onClick={() => handleSubmit(true)}
+                                    >
+                                        Publish course
+                                    </Button>
+                                </div>
+                            )}
+                        </Card.Footer>
                 </Card>
             </div>
         </main>

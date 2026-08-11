@@ -1,8 +1,8 @@
 import { useState, type ReactNode } from 'react';
 import { Card, Badge, Button, Input, Modal, Spinner, Table, type TableColumn } from '../components/ui';
-const buttonVariants = ['primary', 'secondary', 'outline', 'ghost', 'danger'] as const;
+const buttonVariants = ['primary', 'secondary', 'outline', 'ghost', 'danger', 'create', 'free'] as const;
 const buttonSizes = ['sm', 'md', 'lg'] as const;
-const badgeVariants = ['neutral', 'brand', 'success', 'warning', 'danger', 'info', 'outline'] as const;
+const badgeVariants = ['neutral', 'brand', 'success', 'warning', 'danger', 'info', 'outline', 'create', 'free'] as const;
 const cardVariants = ['surface', 'elevated', 'soft', 'dark', 'outline'] as const;
 
 const colorTokens = [
