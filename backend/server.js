@@ -8,7 +8,7 @@ const courseRouter = require('./routes/course-routes');
 const lessonRouter = require('./routes/lesson-routes');
 
 const certificateRoutes = require('./routes/certificateRoutes');
-const authRoutes = require('./routes/authRoutes');
+const authRoutes = require('./routes/auth-routes');
 const enrollmentRoutes = require('./routes/enrollmentRoutes');
 const progressRoutes = require('./routes/progressRoutes');
 const adminRoutes = require('./routes/admin-routes'); // your addition
