@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CartesianGrid,
   Line,
@@ -10,14 +10,12 @@ import {
 } from "recharts";
 import {
   BookOpen,
-  CheckCircle2,
   GraduationCap,
   LayoutDashboard,
   ScrollText,
   Search,
   ShieldCheck,
   Users,
-  XCircle,
 } from "lucide-react";
 
 interface Stats {

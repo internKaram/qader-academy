@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getActivityFeed } from '../../services/activityService';
+import { getActivityFeed } from '../services/activityService';
 
 export default function useActivity(limit = 20) {
   const [activities, setActivities] = useState([]);

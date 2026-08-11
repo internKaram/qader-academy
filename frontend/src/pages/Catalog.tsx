@@ -5,7 +5,6 @@ import { Badge, Button, Card, Spinner } from "../components/ui"
 import api from "../api/axios"
 import { useAuth } from "../hooks/useAuth"
 import type { Course } from "../types/course"
-import { ArrowLeft } from "lucide-react"
 import { Trash2 } from "lucide-react"
 
 function CatalogPage() {
@@ -13,7 +12,6 @@ function CatalogPage() {
     const [loading, setLoading] = useState<boolean>(true)
     const [error, setError] = useState<string | null>(null)
     const { user } = useAuth()
-    const canCreateCourses = user?.role === "instructor" || user?.role === "admin"
 
 
     useEffect(() => {
