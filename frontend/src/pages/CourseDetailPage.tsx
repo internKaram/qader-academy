@@ -4,7 +4,7 @@ import { Badge, Button, Card, Spinner } from "../components/ui"
 import api from "../api/axios"
 import type { CourseWithLessons } from "../types/course"
 import { ArrowLeft } from "lucide-react"
-import { Clock, BookOpen, Pencil, Plus } from "lucide-react"
+import { Clock, BookOpen, Plus } from "lucide-react"
 import { useAuth } from "../hooks/useAuth"
 
 

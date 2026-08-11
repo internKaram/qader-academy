@@ -14,7 +14,7 @@ import { RegisterPage } from "./pages/RegisterPage"
 import { ResetPasswordPage } from "./pages/ResetPasswordPage"
 import { StyleGuidePage } from "./pages/StyleGuidePage"
 import CourseWizardPage from "./pages/CourseWizardPage"
-// Dashboard is currently JavaScript; it is intentionally used until it is migrated to TypeScript.
+// @ts-ignore
 import Dashboard from "./pages/Dashboard"
 
 import { InstructorCourseEditorPage } from "./pages/instructor/InstructorCourseEditorPage"
@@ -43,6 +43,8 @@ function HashScroll() {
 
     return () => window.cancelAnimationFrame(frame)
   }, [hash])
+
+  return null
 }
 
 export default function App() {
