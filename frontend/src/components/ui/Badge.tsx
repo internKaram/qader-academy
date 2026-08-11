@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react';
 import { cn } from '../../lib/cn';
 
-type BadgeVariant = 'neutral' | 'brand' | 'success' | 'warning' | 'danger' | 'info' | 'outline';
+type BadgeVariant = 'neutral' | 'brand' | 'success' | 'warning' | 'danger' | 'info' | 'outline' | 'create' | 'free';
 type BadgeSize = 'sm' | 'md';
 
 interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
@@ -21,6 +21,8 @@ const variantClasses: Record<BadgeVariant, string> = {
   danger: 'bg-danger-light text-danger-dark ring-danger/20',
   info: 'bg-info-light text-info-dark ring-info/20',
   outline: 'bg-transparent text-ink ring-line-strong',
+  create: 'bg-cyan-50 text-cyan-700 ring-cyan-200',
+  free: 'bg-success-light text-success-dark ring-success/20',
 };
 
 const sizeClasses: Record<BadgeSize, string> = {
