@@ -1,73 +1,91 @@
-// @ts-nocheck
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { StyleGuidePage } from './pages/StyleGuidePage';
-import Dashboard from './pages/Dashboard';
-import LessonPlayer from './pages/LessonPlayer';
-import { HomePage } from './pages/HomePage';
-import { StyleGuidePage } from './pages/StyleGuidePage';
-import CertificatesPage from './pages/CertificatesPage';
+import { useEffect } from "react"
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom"
 
-function App() {
-  const pathname = window.location.pathname;
-
-  // Temporary path-based routing until React Router is added.
-  if (pathname === '/style-guide') {
-    return <StyleGuidePage />;
-  }
-
-  /* Routing configuration for Qader Academy student dashboard and lesson player */
-  return (
-    <Router>
-      <div className="min-h-screen bg-gray-50 font-sans">
-        <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/lessons/:courseId" element={<LessonPlayer />} />
-        </Routes>
-      </div>
-    </Router>
-  );
-}
-
-export default App;
-  if (pathname === '/certificates') {
-    return <CertificatesPage />;
-  }
-
-  return <HomePage />;
-
-import { BrowserRouter, Routes, Route } from "react-router-dom"
-import { HomePage } from './pages/HomePage'
-import { StyleGuidePage } from './pages/StyleGuidePage'
-import CatalogPage from './pages/Catalog'
+import CertificatesPage from "./pages/CertificatesPage"
+import CatalogPage from "./pages/Catalog"
 import CourseDetailPage from "./pages/CourseDetailPage"
 import { ForgotPasswordPage } from "./pages/ForgotPasswordPage"
-import { ResetPasswordPage } from "./pages/ResetPasswordPage"
+import { HomePage } from "./pages/HomePage"
+import { InstructorPublicPage } from "./pages/InstructorPublicPage"
 import { LoginPage } from "./pages/LoginPage"
+import { ForbiddenPage } from "./pages/ForbiddenPage"
+import { NotFoundPage } from "./pages/NotFoundPage"
 import { RegisterPage } from "./pages/RegisterPage"
+import { ResetPasswordPage } from "./pages/ResetPasswordPage"
+import { StyleGuidePage } from "./pages/StyleGuidePage"
 import CourseWizardPage from "./pages/CourseWizardPage"
+// Dashboard is currently JavaScript; it is intentionally used until it is migrated to TypeScript.
+import Dashboard from "./pages/Dashboard"
+
+import { InstructorCourseEditorPage } from "./pages/instructor/InstructorCourseEditorPage"
+import { InstructorCourseStudentsPage } from "./pages/instructor/InstructorCourseStudentsPage"
+import { InstructorCourseWizardPage } from "./pages/instructor/InstructorCourseWizardPage"
+import { InstructorCoursesPage } from "./pages/instructor/InstructorCoursesPage"
+import { InstructorOverviewPage } from "./pages/instructor/InstructorOverviewPage"
+import { InstructorQuizBuilderPage } from "./pages/instructor/InstructorQuizBuilderPage"
+
+// admin page resolved by Eng. Salem
+import AdminDashboard from "./pages/adminDashboard"
+
+// Lesson editor page (added by Karam)
 import LessonEditorPage from "./pages/LessonEditorPage"
 
-function App() {
+function HashScroll() {
+  const { hash } = useLocation()
+
+  useEffect(() => {
+    if (!hash) return
+
+    const id = decodeURIComponent(hash.slice(1))
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" })
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [hash])
+}
+
+export default function App() {
   return (
     <BrowserRouter>
+      <HashScroll />
+
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/style-guide" element={<StyleGuidePage />} />
-        <Route path="/courses" element={<CatalogPage />} />
-        <Route path="/courses/:courseId" element={<CourseDetailPage />} />
+        <Route path="/catalog" element={<CatalogPage />} />
+        <Route path="/course/:courseId" element={<CourseDetailPage />} />
+        <Route path="/certificates" element={<CertificatesPage />} />
+
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/instructor/courses/new" element={<CourseWizardPage/>} />
-        <Route path="/instructor/courses/:courseId/edit" element={<CourseWizardPage/>} />
-        <Route path="/instructor/courses/:courseId/lessons" element={<LessonEditorPage/>} />
+
+        <Route path="/style-guide" element={<StyleGuidePage />} />
+
+        <Route path="/dashboard" element={<Dashboard />} />
+
+        {/* Instructor pages */}
+        <Route path="/instructor" element={<InstructorOverviewPage />} />
+        <Route path="/instructor/courses" element={<InstructorCoursesPage />} />
+        <Route path="/instructor/course/:courseId/editor" element={<InstructorCourseEditorPage />} />
+        <Route path="/instructor/course/:courseId/students" element={<InstructorCourseStudentsPage />} />
+        <Route path="/instructor/course/:courseId/wizard" element={<InstructorCourseWizardPage />} />
+        <Route path="/instructor/course/:courseId/quiz" element={<InstructorQuizBuilderPage />} />
+        {/* Course authoring wizard (Karam) */}
+        <Route path="/instructor/courses/new" element={<CourseWizardPage />} />
+        <Route path="/instructor/courses/:courseId/edit" element={<CourseWizardPage />} />
+        <Route path="/instructor/courses/:courseId/lessons" element={<LessonEditorPage />} />
+        {/* Public instructor page */}
+        <Route path="/instructor/:instructorId" element={<InstructorPublicPage />} />
+
+        {/* Admin page */}
+        <Route path="/admin" element={<AdminDashboard />} />
+
+        {/* Forbidden & Not Found */}
+        <Route path="/forbidden" element={<ForbiddenPage />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   )
 }
-
-export default App 
-

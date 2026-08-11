@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
+import { SiteChrome } from "../components/SiteChrome"
 import { Badge, Button, Card, Spinner } from "../components/ui"
 import api from "../api/axios"
 import { useAuth } from "../hooks/useAuth"
@@ -14,11 +15,28 @@ function CatalogPage() {
     const { user } = useAuth()
     const canCreateCourses = user?.role === "instructor" || user?.role === "admin"
 
+
     useEffect(() => {
         const fetchCourses = async () => {
             try {
-                const response = await api.get<Course[]>("/courses")
-                setCourses(response.data)
+                // Public list — always fetched, works for logged-out visitors too
+                const publicResponse = await api.get<Course[]>("/courses")
+                let allCourses = publicResponse.data
+
+                // Only instructors/admins have "my courses" to merge in —
+                // this is what surfaces their own unpublished drafts on the catalog
+                if (user?.role === "instructor" || user?.role === "admin") {
+                    const mineResponse = await api.get<Course[]>("/courses/mine")
+
+                    // Avoid duplicates: any course that's already published shows up
+                    // in both lists, so only add the ones NOT already present (i.e. drafts)
+                    const existingIds = new Set(allCourses.map((c) => c._id))
+                    const ownDrafts = mineResponse.data.filter((c) => !existingIds.has(c._id))
+
+                    allCourses = [...allCourses, ...ownDrafts]
+                }
+
+                setCourses(allCourses)
             } catch (err) {
                 setError("Failed to load courses")
             } finally {
@@ -26,7 +44,7 @@ function CatalogPage() {
             }
         }
         fetchCourses()
-    }, [])
+    }, [user])
 
 
     async function handleDeleteCourse(courseId: string) {
@@ -41,19 +59,13 @@ function CatalogPage() {
 
 
     return (
-        <main className="min-h-screen bg-canvas-soft py-10 text-ink">
+        <SiteChrome>
+            <main className="min-h-screen pt-28 pb-16">
             <div className="page-container">
-                <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-                    <div className="max-w-2xl">
-                        <p className="eyebrow">Catalog</p>
-                        <h1 className="mt-3 font-display text-heading-lg">Browse all courses.</h1>
-                        <p className="mt-4 body-copy">Explore every published course on QaderAcademy.</p>
-                    </div>
-                    {canCreateCourses && (
-                        <Link to="/instructor/courses/new">
-                            <Button>Create new course</Button>
-                        </Link>
-                    )}
+                <div className="max-w-2xl">
+                    <p className="eyebrow">Catalog</p>
+                    <h1 className="mt-3 font-display text-heading-lg">Browse all courses.</h1>
+                    <p className="mt-4 body-copy">Explore every published course on QaderAcademy.</p>
                 </div>
 
                 {loading ? (
@@ -75,12 +87,18 @@ function CatalogPage() {
                             const isOwner = user?.id === course.instructorId
                             return (
                                 <Card key={course._id} variant="surface" interactive className="flex h-full flex-col">
-                                    <Card.Header>
-                                        <div className="flex items-center justify-between gap-2">
-                                            <Badge variant="neutral">{course.category}</Badge>
-                                            {isOwner && <Badge variant="brand">Your course</Badge>}
+                                   <Card.Header>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <Badge variant="neutral">{course.category}</Badge>
+                                        <div className="flex gap-2">
+                                            {!course.isPublished ? (
+                                                <Badge variant="warning">Draft</Badge>
+                                            ) : isOwner ? (
+                                                <Badge variant="brand">Your course</Badge>
+                                            ) : null}
                                         </div>
-                                        <h3 className="font-display text-heading-sm text-ink">{course.title}</h3>
+                                        </div>
+                                     <h3 className="font-display text-heading-sm text-ink">{course.title}</h3>
                                     </Card.Header>
                                     <Card.Body>
                                         <p className="line-clamp-3 text-sm leading-6 text-ink-soft">
@@ -119,7 +137,8 @@ function CatalogPage() {
                     </div>
                 )}
             </div>
-        </main>
+            </main>
+        </SiteChrome>
     )
 }
 

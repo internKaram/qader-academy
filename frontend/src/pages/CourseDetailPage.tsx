@@ -130,7 +130,7 @@ function CourseDetailPage() {
                         <Card.Body>
                             <p className="flex items-center gap-1.5 text-sm text-ink-soft">
                                 <BookOpen className="size-4" />
-                                {course.lessons.length} lessons
+                                {(course.lessons ?? []).length} lessons
                             </p>
                         </Card.Body>
                         <Card.Footer>

@@ -3,8 +3,16 @@ const Lesson = require("../models/Lesson")
 const asyncHandler = require("express-async-handler")
 const mongoose = require('mongoose');
 // public GET
-const getAllCourses = asyncHandler(async (request, response) => {
-        const courses = await Course.find().lean() 
+const getAllCourses = asyncHandler(async (request, response) => {  
+        const courses = await Course.find({ isPublished: true }).lean() // only displays published courses, no drafts
+        if(!courses){
+            return response.status(400).json({message: "No courses found"})
+        }
+        response.json(courses)
+})
+
+const getMyCourses = asyncHandler(async (request, response) => {
+        const courses = await Course.find({ instructorId: request.user.userId }).lean()
         if(!courses){
             return response.status(400).json({message: "No courses found"})
         }
@@ -33,11 +41,12 @@ const createNewCourse = asyncHandler(async (request, response) => {
         return response.status(400).json({message: "Please fill all required fields"})
     }
 
-    const duplicate = await Course.findOne({title}).lean().exec()
-    if(duplicate){
-        return response.status(409).json({message: "Title already exists"})
+    // Scoped to this instructor only — two different instructors can use the same
+    // course title; we're just preventing one instructor from duplicating their own
+    const duplicate = await Course.findOne({ title, instructorId: request.user.userId }).lean().exec()
+    if (duplicate) {
+        return response.status(409).json({ message: "You already have a course with this title" })
     }
-
     const courseObject = {title, description, category, price, instructorId: request.user.userId}
 
     const course = await Course.create(courseObject)
@@ -90,7 +99,7 @@ const deleteCourse = asyncHandler(async (request, response) => {
         return response.status(403).json({ message: "Unauthorized to delete this course" })
     }
 
-    await Lesson.deleteMany({ courseId })
+    await Lesson.deleteMany({ courseId }) // removes lessons belonging to this course
     await Course.findByIdAndDelete(courseId)
 
     response.json({ message: "Course and its lessons deleted successfully" })
@@ -99,6 +108,7 @@ const deleteCourse = asyncHandler(async (request, response) => {
 module.exports = 
 {
     getAllCourses,
+    getMyCourses,
     getSpecificCourse,
     createNewCourse,
     updateCourse,
