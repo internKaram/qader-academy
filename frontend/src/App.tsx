@@ -76,6 +76,7 @@ export default function App() {
         <Route path="/instructor/course/:courseId/quiz" element={<InstructorQuizBuilderPage />} />
         {/* Course authoring wizard (Karam) */}
         <Route path="/instructor/courses/new" element={<CourseWizardPage />} />
+        <Route path="/instructor/courses/:courseId/" element={<CourseDetailPage/>} />
         <Route path="/instructor/courses/:courseId/edit" element={<CourseWizardPage />} />
         <Route path="/instructor/courses/:courseId/lessons" element={<LessonEditorPage />} />
         {/* Public instructor page */}
