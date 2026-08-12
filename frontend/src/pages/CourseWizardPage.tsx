@@ -79,30 +79,30 @@ function CourseWizardPage() {
         return true
     }
 
-async function handlePublish() {
-    setSubmitting(true)
-    setError(null)
+// async function handlePublish() {
+//     setSubmitting(true)
+//     setError(null)
 
-    try {
-        const payload = {
-            title: draft.title,
-            description: draft.description,
-            category: draft.category,
-            price: Number(draft.price),
-            thumbnail: draft.thumbnail,
-            isPublished: true,
-        }
+//     try {
+//         const payload = {
+//             title: draft.title,
+//             description: draft.description,
+//             category: draft.category,
+//             price: Number(draft.price),
+//             thumbnail: draft.thumbnail,
+//             isPublished: true,
+//         }
 
-        await api.patch(`/courses/${courseId}`, payload)
+//         await api.patch(`/courses/${courseId}`, payload)
 
-        clearDraft()
-        navigate("/courses")
-    } catch {
-        setError("Failed to publish course. Please try again.")
-    } finally {
-        setSubmitting(false)
-    }
-}
+//         clearDraft()
+//         navigate("/courses")
+//     } catch {
+//         setError("Failed to publish course. Please try again.")
+//     } finally {
+//         setSubmitting(false)
+//     }
+// }
 
  async function handleSubmit(isPublished: boolean) { // boolean set to true if "Publish Course" button is clicked, otherwise it will be a draft
     setSubmitting(true)
