@@ -141,8 +141,45 @@ const downloadCertificate = async (req, res) => {
     });
   }
 };
+const verifyCertificate = async (req, res) => {
+  try {
+    const { certificateNumber } = req.params;
+
+    const certificate = await Certificate.findOne({
+      certificateNumber,
+    })
+      .populate("student", "name")
+      .populate("course", "title");
+
+    if (!certificate) {
+      return res.status(404).json({
+        success: false,
+        message: "Certificate not found or invalid.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      certificate: {
+        certificateNumber: certificate.certificateNumber,
+        studentName: certificate.student?.name,
+        courseTitle: certificate.course?.title,
+        issueDate: certificate.issueDate,
+      },
+    });
+  } catch (error) {
+    console.error("Certificate verification failed:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to verify certificate.",
+      error: error.message,
+    });
+  }
+};
 module.exports = {
   issueCertificate,
   getMyCertificates,
   downloadCertificate,
+  verifyCertificate,
 };
