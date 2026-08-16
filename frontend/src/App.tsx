@@ -16,7 +16,8 @@ import { ResetPasswordPage } from "./pages/ResetPasswordPage"
 import { StyleGuidePage } from "./pages/StyleGuidePage"
 import CourseWizardPage from "./pages/CourseWizardPage"
 
-// Dashboard is currently JavaScript; it is intentionally used until it is migrated to TypeScript.
+// Dashboard is currently JavaScript.
+// @ts-ignore
 import Dashboard from "./pages/Dashboard"
 
 import { InstructorCourseEditorPage } from "./pages/instructor/InstructorCourseEditorPage"
@@ -87,36 +88,48 @@ export default function App() {
 
         {/* Instructor pages */}
         <Route path="/instructor" element={<InstructorOverviewPage />} />
+
         <Route
           path="/instructor/courses"
           element={<InstructorCoursesPage />}
         />
+
         <Route
           path="/instructor/course/:courseId/editor"
           element={<InstructorCourseEditorPage />}
         />
+
         <Route
           path="/instructor/course/:courseId/students"
           element={<InstructorCourseStudentsPage />}
         />
+
         <Route
           path="/instructor/course/:courseId/wizard"
           element={<InstructorCourseWizardPage />}
         />
+
         <Route
           path="/instructor/course/:courseId/quiz"
           element={<InstructorQuizBuilderPage />}
         />
 
-        {/* Course authoring wizard (Karam) */}
+        {/* Course authoring wizard */}
         <Route
           path="/instructor/courses/new"
           element={<CourseWizardPage />}
         />
+
+        <Route
+          path="/instructor/courses/:courseId/"
+          element={<CourseDetailPage />}
+        />
+
         <Route
           path="/instructor/courses/:courseId/edit"
           element={<CourseWizardPage />}
         />
+
         <Route
           path="/instructor/courses/:courseId/lessons"
           element={<LessonEditorPage />}

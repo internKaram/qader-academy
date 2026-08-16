@@ -84,7 +84,7 @@
   --shadow-card: 0 16px 40px rgb(18 24 38 / 0.08);
   --shadow-lift: 0 24px 64px rgb(18 24 38 / 0.14);
   --shadow-button: 0 10px 24px rgb(215 38 61 / 0.2);
-
+  --shadow-button-create: 0 10px 24px rgb(8 160 155 / 0.2);
   /* Width */
   --container-content: 76rem;
   --container-reading: 46rem;
