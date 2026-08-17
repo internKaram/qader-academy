@@ -5,16 +5,21 @@ const Enrollment = require('../models/Enrollment');
 // @access  Private (test the authentication middleware)
 exports.enrollInCourse = async (req, res) => {
   try {
-    const { studentId, courseId } = req.body;
+    const { studentId: reqStudentId, courseId } = req.body;
+    const studentId = (req.user && req.user.role === 'admin' && reqStudentId)
+      ? reqStudentId
+      : (req.user?.userId || req.user?._id || reqStudentId);
 
-    // 1. validate the student if it exists in the database (assuming you have a User model)
+    if (!courseId) {
+      return res.status(400).json({ message: 'courseId is required' });
+    }
 
     const existingEnrollment = await Enrollment.findOne({ studentId, courseId });
     if (existingEnrollment) {
       return res.status(400).json({ message: 'أنت مسجل بالفعل في هذا الكورس' });
     }
 
-//create a new enrollment
+    // Create a new enrollment
     const newEnrollment = new Enrollment({
       studentId,
       courseId
@@ -36,7 +41,10 @@ exports.enrollInCourse = async (req, res) => {
 // @access  Private
 exports.getStudentEnrollments = async (req, res) => {
   try {
-    const { studentId } = req.query; 
+    const queryStudentId = req.query.studentId;
+    const studentId = (req.user && req.user.role === 'admin' && queryStudentId)
+      ? queryStudentId
+      : (req.user?.userId || req.user?._id || queryStudentId);
 
     if (!studentId) {
       return res.status(400).json({ message: 'missingstudentId' });
