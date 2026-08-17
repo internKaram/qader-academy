@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const connectDB = require('./config/connectDatabase');
 
 const courseRouter = require('./routes/course-routes');
@@ -20,7 +21,19 @@ const app = express();
 connectDB();
 
 // Middleware (Stateless)
-app.use(cors());
+app.use(helmet());
+
+const allowedOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(',').map((url) => url.trim())
+  : ['http://localhost:5173', 'http://localhost:3000'];
+
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
 // Routes
@@ -38,6 +51,27 @@ app.use('/api/v1/admin', adminRoutes);
 
 app.get('/', (req, res) => {
   res.send('API is running...');
+});
+
+// Centralized Error Handling Middleware
+app.use((err, req, res, next) => {
+  console.error('Unhandled server error:', err.message);
+
+  const statusCode =
+    res.statusCode && res.statusCode !== 200
+      ? res.statusCode
+      : 500;
+
+  res.status(statusCode).json({
+    success: false,
+    message:
+      process.env.NODE_ENV === 'production'
+        ? 'Internal Server Error'
+        : err.message,
+    ...(process.env.NODE_ENV !== 'production' && {
+      stack: err.stack,
+    }),
+  });
 });
 
 const PORT = process.env.PORT || 5000;

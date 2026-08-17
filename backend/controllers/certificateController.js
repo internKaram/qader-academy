@@ -1,4 +1,6 @@
 const crypto = require("crypto");
+const path = require("path");
+const fs = require("fs");
 const Certificate = require("../models/Certificate");
 const { generateCertificatePdf } = require("../services/certificatePdfService");
 
@@ -12,11 +14,15 @@ const generateCertificateNumber = () => {
 const issueCertificate = async (req, res) => {
   try {
     const {
-      studentId,
+      studentId: reqStudentId,
       courseId,
       studentName,
       courseTitle,
     } = req.body;
+
+    const studentId = (req.user && req.user.role === 'admin' && reqStudentId)
+      ? reqStudentId
+      : (req.user?.userId || req.user?._id || reqStudentId);
 
     if (!studentId || !courseId || !studentName || !courseTitle) {
       return res.status(400).json({
@@ -127,8 +133,16 @@ const downloadCertificate = async (req, res) => {
       });
     }
 
+    const resolvedPath = path.resolve(certificate.pdfPath);
+    if (!fs.existsSync(resolvedPath)) {
+      return res.status(404).json({
+        success: false,
+        message: "Certificate PDF file not found on disk.",
+      });
+    }
+
     return res.download(
-      certificate.pdfPath,
+      resolvedPath,
       `${certificate.certificateNumber}.pdf`
     );
   } catch (error) {

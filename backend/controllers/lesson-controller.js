@@ -111,6 +111,13 @@ const reorderLessons = asyncHandler(async (request, response) => {
         return response.status(400).json({ message: "lessons array is required" })
     }
 
+    const isValid = lessons.every(
+        (item) => item && item.lessonId && typeof item.orderIndex === 'number' && Number.isInteger(item.orderIndex) && item.orderIndex >= 0
+    );
+    if (!isValid) {
+        return response.status(400).json({ message: "Each lesson item must contain a valid lessonId and positive integer orderIndex" });
+    }
+
     const updateOperations = lessons.map(({ lessonId, orderIndex }) => ({
         updateOne: {
             filter: { _id: lessonId, courseId },
