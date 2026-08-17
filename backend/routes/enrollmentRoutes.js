@@ -1,13 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const { enrollInCourse, getStudentEnrollments } = require('../controllers/enrollmentController');
-const authMiddleware = require('../middlewares/auth-middleware');
-const rbacMiddleware = require('../middlewares/rbac-middleware');
-
-router
-  .route('/')
-  .post(authMiddleware, rbacMiddleware('student'), enrollInCourse)       // POST /api/v1/enrollments
-  .get(authMiddleware, rbacMiddleware('student'), getStudentEnrollments); // GET  /api/v1/enrollments
-
+const { body } = require('express-validator');
+const { enrollInCourse, getMyEnrollments } = require('../controllers/enrollmentController');
+const { protect } = require('../middleware/authMiddleware'); // owned by Faisal (AUTH epic)
+const validateRequest = require('../middleware/validateRequest');
+ 
+const enrollValidators = [
+  body('courseId').isMongoId().withMessage('courseId must be a valid id'),
+];
+ 
+router.post('/', protect, enrollValidators, validateRequest, enrollInCourse);
+router.get('/', protect, getMyEnrollments);
+ 
 module.exports = router;
-
+ 

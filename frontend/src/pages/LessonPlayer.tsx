@@ -1,113 +1,193 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
+import LessonSidebar from '../components/ui/LessonSidebar';
+import Spinner from '../components/ui/Spinner';
+import { ErrorBanner } from '../components/ui/ErrorBanner';
+import { ProgressBar } from '../components/ui/ProgressBar';
+import useProgress from '../hooks/useProgress';
+import api from '../services/progressService';
+import type { Course, Lesson, ApiErrorResponse } from '../types/progress';
  
-// Matches the shape returned by GET /api/v1/courses/:courseId/lessons
-export interface Lesson {
-  id: string;
-  title: string;
-}
+export default function LessonPlayer() {
+    const { courseId } = useParams<{ courseId: string }>();
  
-interface LessonSidebarProps {
-  lessons: Lesson[];
-  activeLessonId?: string;
-  completedLessonIds?: string[];
-  onSelectLesson: (lessonId: string) => void;
-}
+  const [course, setCourse] = useState<Course | null>(null);
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+const [activeLessonId, setActiveLessonId] = useState<string | undefined>(undefined);
+  const [courseLoading, setCourseLoading] = useState<boolean>(true);
+  const [courseError, setCourseError] = useState<string | null>(null);
+  const [marking, setMarking] = useState<boolean>(false);
  
-// FIX: this file was missing entirely — LessonPlayer.tsx imports it as a
-// default export from '../components/LessonSidebar', so this file must live
-// at src/components/LessonSidebar.tsx and export a default component.
-export default function LessonSidebar({
-  lessons = [],
-  activeLessonId,
-  completedLessonIds = [],
-  onSelectLesson,
-}: LessonSidebarProps) {
-  const [collapsed, setCollapsed] = useState(false);
-  const completedSet = new Set(completedLessonIds);
+   const {
+  progress,
+  loading: progressLoading,
+  error: progressError,
+  fieldErrors,
+  markComplete,
+} = useProgress(courseId) as {
+  progress: { 
+    completedLessons: Array<{ lesson: string }>;
+    completionPercentage: number;
+  } | null;
+  loading: boolean;
+  error: string | null;
+  fieldErrors: any;
+  markComplete: (lessonId: string) => Promise<any>;
+};
+ 
+  // Course + lesson content belongs to the Course Management squad's API
+  // (GET /api/v1/courses/:id) — this page only consumes it.
+  const loadCourse = useCallback(async () => {
+    if (!courseId) return;
+    setCourseLoading(true);
+    setCourseError(null);
+    try {
+      const { data } = await api.get<{ course: Course }>(`/courses/${courseId}`);
+      setCourse(data.course);
+      setLessons(data.course.lessons || []);
+      setActiveLessonId((current) => current || data.course.lessons?.[0]?._id || undefined);
+    } catch (err) {
+      const apiErr = err as ApiErrorResponse;
+      setCourseError(apiErr.response?.data?.message || 'Failed to load course content.');
+    } finally {
+      setCourseLoading(false);
+    }
+  }, [courseId]);
+ 
+  useEffect(() => {
+    loadCourse();
+  }, [loadCourse]);
+ 
+  const completedLessonIds = useMemo<string[]>(
+    () => (progress?.completedLessons || []).map((entry) => entry.lesson),
+    [progress]
+  );
+ 
+  const activeLesson = useMemo<Lesson | null>(
+    () => lessons.find((lesson) => lesson._id === activeLessonId) || null,
+    [lessons, activeLessonId]
+  );
+ 
+  const isActiveLessonComplete = activeLessonId
+    ? completedLessonIds.includes(activeLessonId)
+    : false;
+ 
+  const handleCompleteLesson = async (): Promise<void> => {
+    if (!activeLessonId || isActiveLessonComplete) return;
+    setMarking(true);
+    try {
+      await markComplete(activeLessonId);
+    } catch {
+     
+    } finally {
+      setMarking(false);
+    }
+  };
+ 
+  const loading = courseLoading || progressLoading;
+  const error = courseError || progressError;
+ 
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <Spinner label="Loading lesson…" size="lg" />
+      </div>
+    );
+  }
+ 
+  if (error) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-10">
+        <ErrorBanner message={error} onRetry={loadCourse} />
+      </div>
+    );
+  }
  
   return (
-    <aside
-      className={`shrink-0 border-b border-gray-200 bg-white lg:border-b-0 lg:border-r ${
-        collapsed ? 'lg:w-16' : 'lg:w-72'
-      } transition-all duration-200`}
-    >
-      <div className="flex items-center justify-between px-4 py-3 lg:px-3">
-        {!collapsed && (
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-            Lessons
-          </h2>
-        )}
-        <button
-          type="button"
-          onClick={() => setCollapsed((prev) => !prev)}
-          aria-label={collapsed ? 'Expand lesson sidebar' : 'Collapse lesson sidebar'}
-          aria-expanded={!collapsed}
-          className="ml-auto rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            className={`h-5 w-5 transition-transform duration-200 ${collapsed ? 'rotate-180' : ''}`}
-            aria-hidden="true"
-          >
-            <path
-              fillRule="evenodd"
-              d="M12.79 5.23a.75.75 0 010 1.06L8.31 10l4.48 4.71a.75.75 0 01-1.08 1.04l-5-5.25a.75.75 0 010-1.04l5-5.25a.75.75 0 011.08.02z"
-              clipRule="evenodd"
-            />
-          </svg>
-        </button>
-      </div>
+    <div className="flex min-h-screen flex-col bg-gray-50 sm:flex-row">
+      <LessonSidebar
+        lessons={lessons as any}
+        activeLessonId={activeLessonId}
+        completedLessonIds={completedLessonIds}
+        onSelectLesson={setActiveLessonId}
+      />
  
-      <nav aria-label="Lesson list">
-        <ul className="max-h-[70vh] overflow-y-auto px-2 pb-4 lg:max-h-[calc(100vh-4rem)]">
-          {lessons.map((lesson, index) => {
-            const isActive = lesson.id === activeLessonId;
-            const isCompleted = completedSet.has(lesson.id);
+      <main className="flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-3xl px-4 py-8 sm:px-8">
+          {course && (
+            <div className="mb-6">
+              <p className="text-sm font-medium text-indigo-600">{course.title}</p>
+              <ProgressBar percentage={progress?.completionPercentage ?? 0} />
+            </div>
+          )}
  
-            return (
-              <li key={lesson.id}>
-                <button
-                  type="button"
-                  onClick={() => onSelectLesson(lesson.id)}
-                  aria-current={isActive ? 'true' : undefined}
-                  className={`mb-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                    isActive
-                      ? 'bg-indigo-50 font-semibold text-indigo-700'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <span
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                      isCompleted
-                        ? 'bg-green-500 text-white'
-                        : isActive
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-gray-200 text-gray-600'
-                    }`}
-                    aria-hidden="true"
+          {activeLesson ? (
+            <>
+              <div className="aspect-video w-full overflow-hidden rounded-2xl bg-black shadow-sm">
+                {activeLesson.videoUrl ? (
+                  <video
+                    key={activeLesson._id}
+                    src={activeLesson.videoUrl}
+                    controls
+                    className="h-full w-full"
                   >
-                    {isCompleted ? (
-                      <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-                        <path
-                          fillRule="evenodd"
-                          d="M16.7 5.3a1 1 0 010 1.4l-7.4 7.4a1 1 0 01-1.4 0l-3.6-3.6a1 1 0 111.4-1.4l2.9 2.9 6.7-6.7a1 1 0 011.4 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    ) : (
-                      index + 1
-                    )}
-                  </span>
-                  {!collapsed && <span className="line-clamp-2">{lesson.title}</span>}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-    </aside>
+                    <track kind="captions" />
+                  </video>
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-sm text-gray-400">
+                    No video available for this lesson
+                  </div>
+                )}
+              </div>
+ 
+              <h1 className="mt-6 text-xl font-bold text-gray-900 sm:text-2xl">
+                {activeLesson.title}
+              </h1>
+              <p className="mt-2 text-sm leading-relaxed text-gray-600 sm:text-base">
+                {activeLesson.description}
+              </p>
+ 
+              {fieldErrors.length > 0 && (
+                <ul
+                  role="alert"
+                  className="mt-4 space-y-1 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                >
+                  {fieldErrors.map((err : any) => (
+                    <li key={err.field}>
+                      <span className="font-semibold capitalize">{err.field}</span>: {err.message}
+                    </li>
+                  ))}
+                </ul>
+              )}
+ 
+              <button
+                type="button"
+                onClick={handleCompleteLesson}
+                disabled={isActiveLessonComplete || marking}
+                aria-label={
+                  isActiveLessonComplete
+                    ? 'Lesson already completed'
+                    : `Mark ${activeLesson.title} as complete`
+                }
+                className={`mt-6 inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                  isActiveLessonComplete
+                    ? 'cursor-default bg-green-100 text-green-700 focus-visible:ring-green-500'
+                    : 'bg-indigo-600 text-white hover:bg-indigo-700 focus-visible:ring-indigo-500 disabled:opacity-60'
+                }`}
+              >
+                {isActiveLessonComplete
+                  ? 'Lesson Completed'
+                  : marking
+                  ? 'Saving…'
+                  : 'Complete Lesson'}
+              </button>
+            </>
+          ) : (
+            <p className="text-sm text-gray-500">This course doesn't have any lessons yet.</p>
+          )}
+        </div>
+      </main>
+    </div>
   );
 }
  

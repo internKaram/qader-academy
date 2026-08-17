@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { getEnrollments, getProgress } from '../services/progressService';
 import { ProgressBar, Spinner, ErrorBanner } from '../components/ui';
+import ActivityFeed from '../components/ui/ActivityFeed';
  
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -22,9 +23,8 @@ const Dashboard = () => {
           let completionPercentage = 0;
           if (courseId) {
             const progressData = await getProgress(courseId); 
-            completionPercentage = progressData.completionPercentage;
-          }
- 
+               completionPercentage = progressData?.completionPercentage ?? 0;    
+                    }
           return {
             id: courseId,
             title: course.title || 'Untitled course',
@@ -110,8 +110,13 @@ const Dashboard = () => {
           ))}
         </div>
       )}
+
+      {/* Activity Feed Component at the bottom of the dashboard */}
+      <div className="mt-10">
+        <ActivityFeed />
+      </div>
     </div>
   );
 };
- 
+
 export default Dashboard;
