@@ -35,7 +35,7 @@ jobs:
         working-directory: backend
 
   frontend-ci:
-    name: Frontend Lint & Build
+    name: Frontend CI (Lint, Test, Build)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -54,6 +54,10 @@ jobs:
 
       - name: Run Oxlint Linter
         run: npm run lint
+        working-directory: frontend
+
+      - name: Run Frontend Tests (Vitest)
+        run: npm test
         working-directory: frontend
 
       - name: Build Frontend (Type-Check & Vite)

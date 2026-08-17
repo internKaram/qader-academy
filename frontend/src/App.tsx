@@ -26,6 +26,7 @@ import { InstructorQuizBuilderPage } from "./pages/instructor/InstructorQuizBuil
 
 // admin page resolved by Eng. Salem
 import AdminDashboard from "./pages/adminDashboard"
+import { ProtectedRoute } from "./components/ProtectedRoute"
 
 // Lesson editor page (added by Karam)
 import LessonEditorPage from "./pages/LessonEditorPage"
@@ -67,23 +68,27 @@ export default function App() {
 
         <Route path="/dashboard" element={<Dashboard />} />
 
-        {/* Instructor pages */}
-        <Route path="/instructor" element={<InstructorOverviewPage />} />
-        <Route path="/instructor/courses" element={<InstructorCoursesPage />} />
-        <Route path="/instructor/course/:courseId/editor" element={<InstructorCourseEditorPage />} />
-        <Route path="/instructor/course/:courseId/students" element={<InstructorCourseStudentsPage />} />
-        <Route path="/instructor/course/:courseId/wizard" element={<InstructorCourseWizardPage />} />
-        <Route path="/instructor/course/:courseId/quiz" element={<InstructorQuizBuilderPage />} />
-        {/* Course authoring wizard (Karam) */}
-        <Route path="/instructor/courses/new" element={<CourseWizardPage />} />
-        <Route path="/instructor/courses/:courseId/" element={<CourseDetailPage/>} />
-        <Route path="/instructor/courses/:courseId/edit" element={<CourseWizardPage />} />
-        <Route path="/instructor/courses/:courseId/lessons" element={<LessonEditorPage />} />
-        {/* Public instructor page */}
+        {/* Protected Instructor workspace routes */}
+        <Route element={<ProtectedRoute allowedRoles={["instructor"]} />}>
+          <Route path="/instructor" element={<InstructorOverviewPage />} />
+          <Route path="/instructor/courses" element={<InstructorCoursesPage />} />
+          <Route path="/instructor/course/:courseId/editor" element={<InstructorCourseEditorPage />} />
+          <Route path="/instructor/course/:courseId/students" element={<InstructorCourseStudentsPage />} />
+          <Route path="/instructor/course/:courseId/wizard" element={<InstructorCourseWizardPage />} />
+          <Route path="/instructor/course/:courseId/quiz" element={<InstructorQuizBuilderPage />} />
+          <Route path="/instructor/courses/new" element={<CourseWizardPage />} />
+          <Route path="/instructor/courses/:courseId" element={<CourseDetailPage />} />
+          <Route path="/instructor/courses/:courseId/edit" element={<CourseWizardPage />} />
+          <Route path="/instructor/courses/:courseId/lessons" element={<LessonEditorPage />} />
+        </Route>
+
+        {/* Public instructor profile page */}
         <Route path="/instructor/:instructorId" element={<InstructorPublicPage />} />
 
-        {/* Admin page */}
-        <Route path="/admin" element={<AdminDashboard />} />
+        {/* Protected Admin routes */}
+        <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+          <Route path="/admin" element={<AdminDashboard />} />
+        </Route>
 
         {/* Forbidden & Not Found */}
         <Route path="/forbidden" element={<ForbiddenPage />} />

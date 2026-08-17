@@ -186,13 +186,15 @@ const resetPassword = async (req, res) => {
       { expiresIn: '15m' }
     );
 
-    // Mock sending email
-    const resetLink = `http://localhost:5173/reset-password?token=${resetToken}`;
-    console.log('--- MOCK EMAIL ---');
-    console.log(`To: ${user.email}`);
-    console.log(`Subject: Password Reset Request`);
-    console.log(`Body: Click the following link to reset your password: ${resetLink}`);
-    console.log('------------------');
+    // Mock sending email (only in development / testing environments)
+    if (process.env.NODE_ENV !== 'production') {
+      const resetLink = `http://localhost:5173/reset-password?token=${resetToken}`;
+      console.log('--- MOCK EMAIL ---');
+      console.log(`To: ${user.email}`);
+      console.log(`Subject: Password Reset Request`);
+      console.log(`Body: Click the following link to reset your password: ${resetLink}`);
+      console.log('------------------');
+    }
 
     return res.status(200).json({ message: 'If an account with that email exists, a password reset link has been sent.' });
 

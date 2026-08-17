@@ -50,10 +50,11 @@ exports.getAdminUsers = async (req, res) => {
     const { search, role } = req.query;
     let query = {};
 
-    if (search) {
+    if (search && typeof search === 'string') {
+      const sanitizedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } }
+        { name: { $regex: sanitizedSearch, $options: 'i' } },
+        { email: { $regex: sanitizedSearch, $options: 'i' } }
       ];
     }
 
@@ -61,7 +62,7 @@ exports.getAdminUsers = async (req, res) => {
       query.role = role;
     }
 
-    const users = await User.find(query).select('-password');
+    const users = await User.find(query).select('-passwordHash');
     res.status(200).json({ success: true, count: users.length, users });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -82,12 +83,15 @@ exports.updateUserRole = async (req, res) => {
     await user.save();
 
     // تسجيل الحدث في الـ Audit Log
-    await AuditLog.create({
-      admin: req.user._id,
-      action: 'UPDATE_USER_ROLE',
-      targetUser: user._id,
-      details: `Changed role from ${oldRole} to ${role}`
-    });
+    const adminId = req.user.userId || req.user._id;
+    if (adminId) {
+      await AuditLog.create({
+        admin: adminId,
+        action: 'UPDATE_USER_ROLE',
+        targetUser: user._id,
+        details: `Changed role from ${oldRole} to ${role}`
+      });
+    }
 
     res.status(200).json({ success: true, message: 'User role updated successfully', user });
   } catch (error) {
@@ -103,12 +107,15 @@ exports.suspendUser = async (req, res) => {
     
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-    await AuditLog.create({
-      admin: req.user._id,
-      action: 'SUSPEND_USER',
-      targetUser: id,
-      details: `Deleted/Suspended user ${user.email}`
-    });
+    const adminId = req.user.userId || req.user._id;
+    if (adminId) {
+      await AuditLog.create({
+        admin: adminId,
+        action: 'SUSPEND_USER',
+        targetUser: id,
+        details: `Deleted/Suspended user ${user.email}`
+      });
+    }
 
     res.status(200).json({ success: true, message: 'User suspended/deleted successfully' });
   } catch (error) {

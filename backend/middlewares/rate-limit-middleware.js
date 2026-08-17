@@ -10,6 +10,7 @@ const loginLimiter = rateLimit({
   message: { message: 'Too many login attempts from this IP, please try again after 5 minutes' },
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  validate: { trustProxy: false },
 });
 
 /**
@@ -22,6 +23,7 @@ const resetPasswordLimiter = rateLimit({
   message: { message: 'Too many password reset attempts from this IP, please try again after 5 minutes' },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { trustProxy: false },
 });
 
 module.exports = {

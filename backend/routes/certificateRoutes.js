@@ -4,11 +4,12 @@ const {
   getMyCertificates,
   downloadCertificate,
 } = require("../controllers/certificateController");
+const authMiddleware = require("../middlewares/auth-middleware");
 
 const router = express.Router();
 
-router.get("/", getMyCertificates);
-router.post("/", issueCertificate);
+router.get("/", authMiddleware, getMyCertificates);
+router.post("/", authMiddleware, issueCertificate);
 
 router.get(
   "/:certificateNumber/download",

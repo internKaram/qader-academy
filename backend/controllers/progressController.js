@@ -85,21 +85,24 @@ const getProgress = async (req, res) => {
 const getCompletionStatus = async (req, res) => {
   try {
     const { courseId } = req.params;
-    const studentId = req.query.student;
- 
+    const queryStudentId = req.query.student;
+    const studentId = (req.user && req.user.role === 'admin' && queryStudentId)
+      ? queryStudentId
+      : (req.user?._id || req.user?.userId || queryStudentId);
+
     if (!studentId) {
-      return res.status(400).json({ message: 'student query param is required' });
+      return res.status(400).json({ message: 'student query param or authentication is required' });
     }
- 
+
     const Lesson = mongoose.model('Lesson'); 
     const [totalLessons, progress] = await Promise.all([
       Lesson.countDocuments({ course: courseId }),
       Progress.findOne({ student: studentId, course: courseId }),
     ]);
- 
+
     const completedCount = progress ? progress.completedLessons.length : 0;
     const allLessonsComplete = totalLessons > 0 && completedCount >= totalLessons;
- 
+
     return res.status(200).json({ allLessonsComplete, completedCount, totalLessons });
   } catch (error) {
     return res
