@@ -4,7 +4,7 @@ import { Badge, Button, Card, Spinner } from "../components/ui"
 import api from "../api/axios"
 import type { CourseWithLessons } from "../types/course"
 import { ArrowLeft } from "lucide-react"
-import { Clock, BookOpen, Pencil, Plus } from "lucide-react"
+import { Clock, BookOpen, Plus } from "lucide-react"
 import { useAuth } from "../hooks/useAuth"
 
 
@@ -46,7 +46,7 @@ function CourseDetailPage() {
             <main className="grid min-h-screen place-items-center bg-canvas-soft p-8 text-center">
                 <div>
                     <h1 className="font-display text-heading-sm text-ink">{error ?? "Course not found"}</h1>
-                    <Link to="/courses" className="mt-4 inline-block">
+                    <Link to="/catalog" className="mt-4 inline-block">
                         <Button variant="outline">Back to catalog</Button>
                     </Link>
                 </div>
@@ -59,7 +59,7 @@ function CourseDetailPage() {
     return (
         <main className="min-h-screen bg-canvas-soft py-10 text-ink">
             <div className="page-container">
-                <Link to="/courses" className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-ink-soft transition hover:text-brand-700">
+                <Link to="/catalog" className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-ink-soft transition hover:text-brand-700">
                     <ArrowLeft className="size-4" />
                     Back to catalog
                 </Link>
@@ -130,7 +130,7 @@ function CourseDetailPage() {
                         <Card.Body>
                             <p className="flex items-center gap-1.5 text-sm text-ink-soft">
                                 <BookOpen className="size-4" />
-                                {course.lessons.length} lessons
+                                {(course.lessons ?? []).length} Lesson(s) 
                             </p>
                         </Card.Body>
                         <Card.Footer>

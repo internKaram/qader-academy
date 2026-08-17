@@ -6,7 +6,7 @@ const { logActivity } = require('../controllers/activityController');
 const {
   buildCertificateRequestBody,
   isLikelyDuplicateResponse,
-} = require('../config/certificateContract');
+} = require('../contracts/certificateContract');
  
 const CERT_SERVICE_URL = process.env.CERT_SERVICE_URL || 'http://localhost:5000/api/v1/certificates';
  

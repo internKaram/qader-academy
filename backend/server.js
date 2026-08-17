@@ -1,33 +1,57 @@
-require('dotenv').config({ path: './backend/.env' });
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const connectDB = require('./config/connectDatabase');
-const courseRouter = require('./routes/course-routes') 
-const lessonRouter = require('./routes/lesson-routes') 
-const authRoutes = require('./routes/auth-routes');
+
+const courseRouter = require('./routes/course-routes');
+const lessonRouter = require('./routes/lesson-routes');
 
 const certificateRoutes = require('./routes/certificateRoutes');
-
+const authRoutes = require('./routes/auth-routes');
 const enrollmentRoutes = require('./routes/enrollmentRoutes');
+const progressRoutes = require('./routes/progressRoutes');
+const adminRoutes = require('./routes/admin-routes'); // your addition
+
 const app = express();
-const progressRoutes = require('./routes/progressRoutes'); 
+
 // Connect to Database
 connectDB();
 
 // Middleware (Stateless)
-app.use(cors());
+app.use(helmet());
+const allowedOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(',').map((url) => url.trim())
+  : ['http://localhost:5173', 'http://localhost:3000'];
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
 
 // Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/certificates', certificateRoutes);
 
-app.use('/api/v1/courses', courseRouter)
-app.use('/api/v1/courses', lessonRouter)
+app.use('/api/v1/courses', courseRouter);
+app.use('/api/v1/courses', lessonRouter);
+
 app.use('/api/v1/enrollments', enrollmentRoutes);
 app.use('/api/v1/progress', progressRoutes);
+
+app.use('/api/v1/admin', adminRoutes);
+
 app.get('/', (req, res) => {
   res.send('API is running...');
+});
+
+// Centralized Error Handling Middleware (OWASP A05: Security Misconfiguration)
+app.use((err, req, res, next) => {
+  console.error('Unhandled server error:', err.message);
+  const statusCode = res.statusCode && res.statusCode !== 200 ? res.statusCode : 500;
+  res.status(statusCode).json({
+    success: false,
+    message: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message,
+    ...(process.env.NODE_ENV !== 'production' && { stack: err.stack }),
+  });
 });
 
 const PORT = process.env.PORT || 5000;

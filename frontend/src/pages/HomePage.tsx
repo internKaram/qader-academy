@@ -439,7 +439,7 @@ export function HomePage() {
                 </p>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row lg:justify-end" data-animate-item>
-                <Button size="lg" onClick={() => navigateTo('/courses')}>
+                <Button size="lg" onClick={() => navigateTo('/catalog')}>
                   Browse courses
                 </Button>
               </div>

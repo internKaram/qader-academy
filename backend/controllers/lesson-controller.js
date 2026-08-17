@@ -23,9 +23,11 @@ const createNewLesson = asyncHandler(async (request, response) => {
         return response.status(403).json({ message: "Not authorized to add lessons to this course" })
     }
 
-    const duplicate = await Lesson.findOne({title}).lean().exec()
-    if(duplicate){
-        return response.status(409).json({message: "Title already exists"})
+    // Scoped to this course only — "Lesson 1" is a totally reasonable title
+    // to reuse across different courses, just not twice within the same one
+    const duplicate = await Lesson.findOne({ title, courseId }).lean().exec()
+    if (duplicate) {
+        return response.status(409).json({ message: "This course already has a lesson with this title" })
     }
 
 
@@ -107,6 +109,13 @@ const reorderLessons = asyncHandler(async (request, response) => {
 
     if (!Array.isArray(lessons) || lessons.length === 0) {
         return response.status(400).json({ message: "lessons array is required" })
+    }
+
+    const isValid = lessons.every(
+        (item) => item && item.lessonId && typeof item.orderIndex === 'number' && Number.isInteger(item.orderIndex) && item.orderIndex >= 0
+    );
+    if (!isValid) {
+        return response.status(400).json({ message: "Each lesson item must contain a valid lessonId and positive integer orderIndex" });
     }
 
     const updateOperations = lessons.map(({ lessonId, orderIndex }) => ({
