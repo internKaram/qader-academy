@@ -2,6 +2,7 @@ import { useEffect } from "react"
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom"
 
 import CertificatesPage from "./pages/CertificatesPage"
+import VerifyCertificatePage from "./pages/VerifyCertificatePage"
 import CatalogPage from "./pages/Catalog"
 import CourseDetailPage from "./pages/CourseDetailPage"
 import { ForgotPasswordPage } from "./pages/ForgotPasswordPage"
@@ -14,6 +15,8 @@ import { RegisterPage } from "./pages/RegisterPage"
 import { ResetPasswordPage } from "./pages/ResetPasswordPage"
 import { StyleGuidePage } from "./pages/StyleGuidePage"
 import CourseWizardPage from "./pages/CourseWizardPage"
+
+// Dashboard is currently JavaScript.
 // @ts-ignore
 import Dashboard from "./pages/Dashboard"
 
@@ -24,11 +27,8 @@ import { InstructorCoursesPage } from "./pages/instructor/InstructorCoursesPage"
 import { InstructorOverviewPage } from "./pages/instructor/InstructorOverviewPage"
 import { InstructorQuizBuilderPage } from "./pages/instructor/InstructorQuizBuilderPage"
 
-// admin page resolved by Eng. Salem
 import AdminDashboard from "./pages/adminDashboard"
 import { ProtectedRoute } from "./components/ProtectedRoute"
-
-// Lesson editor page (added by Karam)
 import LessonEditorPage from "./pages/LessonEditorPage"
 
 function HashScroll() {
@@ -38,8 +38,14 @@ function HashScroll() {
     if (!hash) return
 
     const id = decodeURIComponent(hash.slice(1))
+
     const frame = window.requestAnimationFrame(() => {
-      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" })
+      document
+        .getElementById(id)
+        ?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        })
     })
 
     return () => window.cancelAnimationFrame(frame)
@@ -54,36 +60,76 @@ export default function App() {
       <HashScroll />
 
       <Routes>
+        {/* Public pages */}
         <Route path="/" element={<HomePage />} />
         <Route path="/catalog" element={<CatalogPage />} />
         <Route path="/course/:courseId" element={<CourseDetailPage />} />
-        <Route path="/certificates" element={<CertificatesPage />} />
 
+        {/* Certificate pages */}
+        <Route path="/certificates" element={<CertificatesPage />} />
+        <Route
+          path="/verify/:certificateNumber"
+          element={<VerifyCertificatePage />}
+        />
+
+        {/* Authentication */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
 
+        {/* Style Guide */}
         <Route path="/style-guide" element={<StyleGuidePage />} />
 
+        {/* Student Dashboard */}
         <Route path="/dashboard" element={<Dashboard />} />
 
         {/* Protected Instructor workspace routes */}
         <Route element={<ProtectedRoute allowedRoles={["instructor"]} />}>
           <Route path="/instructor" element={<InstructorOverviewPage />} />
-          <Route path="/instructor/courses" element={<InstructorCoursesPage />} />
-          <Route path="/instructor/course/:courseId/editor" element={<InstructorCourseEditorPage />} />
-          <Route path="/instructor/course/:courseId/students" element={<InstructorCourseStudentsPage />} />
-          <Route path="/instructor/course/:courseId/wizard" element={<InstructorCourseWizardPage />} />
-          <Route path="/instructor/course/:courseId/quiz" element={<InstructorQuizBuilderPage />} />
-          <Route path="/instructor/courses/new" element={<CourseWizardPage />} />
-          <Route path="/instructor/courses/:courseId" element={<CourseDetailPage />} />
-          <Route path="/instructor/courses/:courseId/edit" element={<CourseWizardPage />} />
-          <Route path="/instructor/courses/:courseId/lessons" element={<LessonEditorPage />} />
+          <Route
+            path="/instructor/courses"
+            element={<InstructorCoursesPage />}
+          />
+          <Route
+            path="/instructor/course/:courseId/editor"
+            element={<InstructorCourseEditorPage />}
+          />
+          <Route
+            path="/instructor/course/:courseId/students"
+            element={<InstructorCourseStudentsPage />}
+          />
+          <Route
+            path="/instructor/course/:courseId/wizard"
+            element={<InstructorCourseWizardPage />}
+          />
+          <Route
+            path="/instructor/course/:courseId/quiz"
+            element={<InstructorQuizBuilderPage />}
+          />
+          <Route
+            path="/instructor/courses/new"
+            element={<CourseWizardPage />}
+          />
+          <Route
+            path="/instructor/courses/:courseId"
+            element={<CourseDetailPage />}
+          />
+          <Route
+            path="/instructor/courses/:courseId/edit"
+            element={<CourseWizardPage />}
+          />
+          <Route
+            path="/instructor/courses/:courseId/lessons"
+            element={<LessonEditorPage />}
+          />
         </Route>
 
         {/* Public instructor profile page */}
-        <Route path="/instructor/:instructorId" element={<InstructorPublicPage />} />
+        <Route
+          path="/instructor/:instructorId"
+          element={<InstructorPublicPage />}
+        />
 
         {/* Protected Admin routes */}
         <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
