@@ -21,7 +21,7 @@ exports.markLessonComplete = async (req, res) => {
     }
     progress.lastAccessedAt = new Date();
  
-    const totalLessons = await Lesson.countDocuments({ course: courseId });
+    const totalLessons = await Lesson.countDocuments({ courseId });
     progress.completionPercentage = totalLessons
       ? Math.round((progress.completedLessons.length / totalLessons) * 100)
       : 0;
@@ -104,7 +104,7 @@ exports.getCompletionStatus = async (req, res) => {
     }
 
     const [totalLessons, progress] = await Promise.all([
-      Lesson.countDocuments({ course: courseId }),
+      Lesson.countDocuments({ courseId }),
       Progress.findOne({ student: studentId, course: courseId }),
     ]);
 

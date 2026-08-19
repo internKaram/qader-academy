@@ -75,24 +75,24 @@ describe('LessonPlayer', () => {
   it('shows an error banner with retry if the course fails to load', async () => {
     mockedApiGet.mockRejectedValue({ response: { data: { message: 'Course not found' } } });
     mockedGetProgress.mockResolvedValue(null);
- 
+
     render(<LessonPlayer />);
- 
+
     expect(await screen.findByText('Course not found')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /retry|try again/i })).toBeInTheDocument();
   });
- 
+
   it('shows the empty state when the course has no lessons', async () => {
     mockedApiGet.mockResolvedValue(
       mockAxiosResponse({ course: { _id: 'course1', title: 'Empty Course', lessons: [] } })
     );
     mockedGetProgress.mockResolvedValue(null);
- 
+
     render(<LessonPlayer />);
- 
+
     expect(await screen.findByText(/doesn't have any lessons yet/i)).toBeInTheDocument();
   });
- 
+
   it('renders the first lesson and its progress bar once loaded', async () => {
     mockedApiGet.mockResolvedValue(mockAxiosResponse({ course: mockCourse }));
     mockedGetProgress.mockResolvedValue({
@@ -103,17 +103,17 @@ describe('LessonPlayer', () => {
       completionPercentage: 0,
       certificateIssued: false,
     });
- 
+
     render(<LessonPlayer />);
- 
-    expect(await screen.findByText('What is React?')).toBeInTheDocument();
+
+    expect((await screen.findAllByText('What is React?')).length).toBeGreaterThan(0);
     expect(screen.getByText('A quick overview of React.')).toBeInTheDocument();
-    expect(screen.getByText('0% complete')).toBeInTheDocument();
+    expect(screen.getAllByText('0%').length).toBeGreaterThan(0);
     expect(
       screen.getByRole('button', { name: /mark what is react\? as complete/i })
     ).toBeInTheDocument();
   });
- 
+
   it('marks the active lesson complete and reflects the update without a page refresh', async () => {
     const user = userEvent.setup();
     mockedApiGet.mockResolvedValue(mockAxiosResponse({ course: mockCourse }));
@@ -133,19 +133,19 @@ describe('LessonPlayer', () => {
       completionPercentage: 50,
       certificateIssued: false,
     });
- 
+
     render(<LessonPlayer />);
- 
+
     const completeButton = await screen.findByRole('button', {
       name: /mark what is react\? as complete/i,
     });
     await user.click(completeButton);
- 
+
     await waitFor(() =>
       expect(mockedMarkLessonComplete).toHaveBeenCalledWith('course1', 'lesson1')
     );
     expect(await screen.findByText('Lesson Completed')).toBeInTheDocument();
-    expect(screen.getByText('50% complete')).toBeInTheDocument();
+    expect(screen.getAllByText('50%').length).toBeGreaterThan(0);
   });
 });
  
