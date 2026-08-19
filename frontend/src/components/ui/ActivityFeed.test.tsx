@@ -2,80 +2,87 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ActivityFeed from './ActivityFeed';
-import * as progressService from '../../services/progressService';
-import type { Activity } from '../../types/progress';
- 
-vi.mock('../../services/progressService');
- 
-const mockedGetActivity = vi.mocked(progressService.getActivity);
- 
-function makeActivity(overrides: Partial<Activity> = {}): Activity {
+import * as activityService from '../../services/activityService';
+
+vi.mock('../../services/activityService');
+
+const mockedGetActivityFeed = vi.mocked(activityService.getActivityFeed);
+
+function makeActivity(overrides: Record<string, any> = {}) {
   return {
     _id: 'act1',
     type: 'lesson_completed',
     courseTitle: 'Intro to React',
     lessonTitle: 'What is React?',
-    occurredAt: '2026-08-01T10:00:00.000Z',
+    createdAt: '2026-08-01T10:00:00.000Z',
     ...overrides,
   };
 }
- 
+
 describe('ActivityFeed', () => {
   beforeEach(() => {
     vi.resetAllMocks();
   });
- 
+
   it('shows a loading spinner while activity is being fetched', () => {
-    mockedGetActivity.mockReturnValue(new Promise(() => {}));
- 
+    mockedGetActivityFeed.mockReturnValue(new Promise(() => {}));
+
     render(<ActivityFeed />);
- 
-    expect(screen.getByText(/loading activity/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/loading recent activity/i)).toBeInTheDocument();
   });
- 
+
   it('shows an empty-state message when there is no activity yet', async () => {
-    mockedGetActivity.mockResolvedValue([]);
- 
+    mockedGetActivityFeed.mockResolvedValue({
+      activities: [],
+      pagination: { page: 1, limit: 20, total: 0, hasMore: false },
+    });
+
     render(<ActivityFeed />);
- 
+
     expect(await screen.findByText(/no activity yet/i)).toBeInTheDocument();
   });
- 
+
   it('renders each activity item once loaded', async () => {
-    mockedGetActivity.mockResolvedValue([
-      makeActivity(),
-      makeActivity({
-        _id: 'act2',
-        type: 'enrolled',
-        courseTitle: 'Advanced Node',
-        lessonTitle: undefined,
-        occurredAt: '2026-08-02T10:00:00.000Z',
-      }),
-    ]);
- 
+    mockedGetActivityFeed.mockResolvedValue({
+      activities: [
+        makeActivity(),
+        makeActivity({
+          _id: 'act2',
+          type: 'course_started',
+          courseTitle: 'Advanced Node',
+          createdAt: '2026-08-02T10:00:00.000Z',
+        }),
+      ],
+      pagination: { page: 1, limit: 20, total: 2, hasMore: false },
+    });
+
     render(<ActivityFeed />);
- 
+
     expect(
       await screen.findByText('Completed "What is React?" in Intro to React')
     ).toBeInTheDocument();
-    expect(screen.getByText('Enrolled in Advanced Node')).toBeInTheDocument();
+    expect(screen.getByText('Started Advanced Node')).toBeInTheDocument();
   });
- 
+
   it('shows an error banner with a retry button when loading fails', async () => {
     const user = userEvent.setup();
-    mockedGetActivity
+    mockedGetActivityFeed
       .mockRejectedValueOnce({ response: { data: { message: 'Server error' } } })
-      .mockResolvedValueOnce([]);
- 
+      .mockResolvedValueOnce({
+        activities: [],
+        pagination: { page: 1, limit: 20, total: 0, hasMore: false },
+      });
+
     render(<ActivityFeed />);
- 
+
     expect(await screen.findByText('Server error')).toBeInTheDocument();
- 
-    const retryButton = screen.getByRole('button', { name: /try again/i });
+
+    const retryButton = screen.getByRole('button', { name: /retry/i });
     await user.click(retryButton);
- 
+
     expect(await screen.findByText(/no activity yet/i)).toBeInTheDocument();
-    expect(mockedGetActivity).toHaveBeenCalledTimes(2);
+    expect(mockedGetActivityFeed).toHaveBeenCalledTimes(2);
   });
 });
  

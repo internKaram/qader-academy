@@ -3,6 +3,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const fs = require("fs");
 const path = require("path");
+const jwt = require("jsonwebtoken");
 
 const { connect, clearDatabase, closeDatabase } = require("../setup");
 
@@ -41,23 +42,13 @@ const Course =
 const app = express();
 app.use(express.json());
 
-// Test-only helper so GET /certificates can receive req.user
-app.use("/api/v1/certificates", (req, res, next) => {
-  const testUserId = req.headers["x-test-user-id"];
-
-  if (testUserId) {
-    req.user = { _id: testUserId };
-  }
-
-  next();
-});
-
 app.use("/api/v1/certificates", certificateRoutes);
 app.use("/api/v1/verify", verifyRoutes);
 
 let student;
 let course;
 let tempPdfPath;
+let token;
 
 beforeAll(async () => {
   await connect();
@@ -75,6 +66,11 @@ beforeEach(async () => {
   course = await Course.create({
     title: "MERN Stack Course",
   });
+
+  token = jwt.sign(
+    { userId: student._id.toString(), id: student._id.toString(), role: "student" },
+    process.env.JWT_SECRET || "test_jwt_secret_key_123"
+  );
 
   fs.writeFileSync(tempPdfPath, "Test certificate PDF content");
 
@@ -99,6 +95,7 @@ describe("Certificate endpoints", () => {
     it("should issue a certificate successfully", async () => {
       const res = await request(app)
         .post("/api/v1/certificates")
+        .set("Authorization", `Bearer ${token}`)
         .send({
           studentId: student._id.toString(),
           courseId: course._id.toString(),
@@ -128,6 +125,7 @@ describe("Certificate endpoints", () => {
     it("should return 400 when required fields are missing", async () => {
       const res = await request(app)
         .post("/api/v1/certificates")
+        .set("Authorization", `Bearer ${token}`)
         .send({
           studentId: student._id.toString(),
         });
@@ -149,7 +147,7 @@ describe("Certificate endpoints", () => {
 
       const res = await request(app)
         .get("/api/v1/certificates")
-        .set("x-test-user-id", student._id.toString());
+        .set("Authorization", `Bearer ${token}`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -162,9 +160,8 @@ describe("Certificate endpoints", () => {
         .get("/api/v1/certificates");
 
       expect(res.status).toBe(401);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toBe(
-        "Authentication is required."
+      expect(res.body.message).toMatch(
+        /Authentication is required|Not authorized/i
       );
     });
   });

@@ -1,21 +1,24 @@
 const request = require('supertest');
 const bcrypt = require('bcrypt');
 const app = require('../app');
-const User = require('../models/User');
- 
+const User = require('../models/user');
+const { connect, clearDatabase, closeDatabase } = require('./setup');
+
+process.env.JWT_SECRET = 'test_secret_key';
 
 afterAll(async () => {
-  await User.deleteMany({ email: { $in: ['sabrin@qader.com', 'salem@qader.com'] } });
+  await closeDatabase();
 });
- 
+
 describe('RBAC — /api/v1/admin/* access control', () => {
   const STUDENT_PASSWORD = 'Student@123';
   const ADMIN_PASSWORD = 'Admin@123';
- 
+
   let studentToken;
   let adminToken;
- 
+
   beforeAll(async () => {
+    await connect();
     const [studentHash, adminHash] = await Promise.all([
       bcrypt.hash(STUDENT_PASSWORD, 10),
       bcrypt.hash(ADMIN_PASSWORD, 10),
