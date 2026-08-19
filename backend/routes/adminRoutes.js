@@ -1,19 +1,4 @@
 
-const express = require('express');
-const router = express.Router();
- 
-const { protect } = require('../middleware/authMiddleware');
-const { adminOnly } = require('../middleware/rbacMiddleware');
- 
+module.exports = require('./admin-routes');
 
-router.get('/stats', protect, adminOnly, (req, res) => {
-  res.status(200).json({
-    totalUsers: 0,
-    totalCourses: 0,
-    totalEnrollments: 0,
-    completionRate: 0,
-  });
-});
- 
-module.exports = router;
  
