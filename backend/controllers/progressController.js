@@ -73,11 +73,6 @@ exports.getCourseProgress = async (req, res) => {
   }
 };
  
-/**
- * GET /api/v1/progress
- * Returns progress across all of the logged-in student's enrolled courses
- * (used by the dashboard to render per-course progress bars).
- */
 exports.getAllProgress = async (req, res) => {
   try {
     const studentId = req.user.id;
@@ -89,17 +84,25 @@ exports.getAllProgress = async (req, res) => {
   } catch (err) {
     console.error('getAllProgress error:', err);
     return res.status(500).json({ message: 'Server error while fetching progress' });
+  }
+};
+
+/**
+ * GET /api/v1/progress/:courseId/completion-status
+ * Returns completion status for a given course.
+ */
+exports.getCompletionStatus = async (req, res) => {
+  try {
     const { courseId } = req.params;
     const queryStudentId = req.query.student;
     const studentId = (req.user && req.user.role === 'admin' && queryStudentId)
       ? queryStudentId
-      : (req.user?._id || req.user?.userId || queryStudentId);
+      : (req.user?._id || req.user?.userId || req.user?.id || queryStudentId);
 
     if (!studentId) {
       return res.status(400).json({ message: 'student query param or authentication is required' });
     }
 
-    const Lesson = mongoose.model('Lesson'); 
     const [totalLessons, progress] = await Promise.all([
       Lesson.countDocuments({ course: courseId }),
       Progress.findOne({ student: studentId, course: courseId }),
@@ -115,4 +118,6 @@ exports.getAllProgress = async (req, res) => {
       .json({ message: 'Server error checking completion status', error: error.message });
   }
 };
+
+exports.getProgress = exports.getCourseProgress;
  
