@@ -9,7 +9,7 @@ const rbacMiddleware = require('../middlewares/rbac-middleware');
 
 
 router.route("/")
-    .get(courseController.getAllCourses)
+    .get(courseController.paginationValidators, courseController.getAllCourses)
     .post(
       authMiddleware,
       rbacMiddleware("instructor", "admin"),

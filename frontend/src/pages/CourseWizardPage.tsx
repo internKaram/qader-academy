@@ -237,7 +237,7 @@ function CourseWizardPage() {
                                     label="Thumbnail URL"
                                     optional
                                     placeholder="https://example.com/course-thumbnail.jpg"
-                                    hint="Paste a link to an already-hosted image."
+                                    hint="Paste a link to an already-hosted image. Recommended size: 1280×720 (16:9) for the best banner fit."
                                     value={draft.thumbnail}
                                     onChange={(e) => updateField("thumbnail", e.target.value)}
                                     error={fieldErrors.thumbnail}
@@ -290,7 +290,9 @@ function CourseWizardPage() {
                                 <Button
                                     variant="outline"
                                     loading={submitting}
-                                    onClick={() => handleSubmit(false)}
+                                    onClick={() => handleSubmit(isEditMode ? draft.isPublished : false)}
+                                    className="border-warning/30 bg-warning/10 hover:border-warning/55 hover:bg-warning/20 hover:text-warning"
+
                                 >
                                     {isEditMode ? "Save changes" : "Save as draft"}
                                 </Button>
@@ -300,6 +302,7 @@ function CourseWizardPage() {
                                         variant="create"
                                         loading={submitting}
                                         onClick={() => handleSubmit(true)}
+
                                     >
                                         Publish course
                                     </Button>

@@ -7,6 +7,16 @@ import { ArrowLeft } from "lucide-react"
 import { Clock, BookOpen, Plus } from "lucide-react"
 import { useAuth } from "../hooks/useAuth"
 
+// Renders a lesson duration total as "1h 25m" / "45m" depending on size —
+// avoids showing "85 min" for anything over an hour.
+function formatDuration(totalMinutes: number): string {
+    if (totalMinutes <= 0) return "0 min"
+    const hours = Math.floor(totalMinutes / 60)
+    const minutes = totalMinutes % 60
+    if (hours === 0) return `${minutes} min`
+    if (minutes === 0) return `${hours}h`
+    return `${hours}h ${minutes}m`
+}
 
 function CourseDetailPage() {
     const { courseId } = useParams<{ courseId: string }>()
@@ -15,7 +25,7 @@ function CourseDetailPage() {
     const [error, setError] = useState<string | null>(null)
     const { user } = useAuth()
 
-    
+
     useEffect(() => {
         if (!courseId) return
         const fetchCourse = async () => {
@@ -55,6 +65,8 @@ function CourseDetailPage() {
     }
 
     const isOwner = user?.id === course.instructorId
+    const lessons = course.lessons ?? []
+    const totalMinutes = lessons.reduce((sum, lesson) => sum + (lesson.duration ?? 0), 0)
 
     return (
         <main className="min-h-screen bg-canvas-soft py-10 text-ink">
@@ -64,7 +76,7 @@ function CourseDetailPage() {
                     Back to catalog
                 </Link>
                 <div className="overflow-hidden rounded-panel bg-canvas-dark text-white shadow-lift">
-                    <div className="relative min-h-56 bg-linear-to-br from-brand-600 via-brand-500 to-[#f7b2a6] p-8">
+                    <div className="relative min-h-80 sm:min-h-96">
                         {course.thumbnail ? (
                             <img
                                 className="absolute inset-0 h-full w-full object-cover"
@@ -72,13 +84,27 @@ function CourseDetailPage() {
                                 alt=""
                                 aria-hidden="true"
                             />
-                        ) : null}
-                        <div className="absolute inset-0 bg-linear-to-t from-ink/85 via-ink/30 to-ink/10" />
-                        <div className="relative">
+                        ) : (
+                            <div className="absolute inset-0 bg-linear-to-br from-brand-600 via-brand-500 to-[#f7b2a6]" />
+                        )}
+                        {/* Overlay only at the bottom, so the thumbnail is visible across
+                            most of the banner instead of being washed out edge to edge. */}
+                        <div className="absolute inset-0 bg-linear-to-t from-ink/90 via-ink/10 to-transparent" />
+                        <div className="absolute inset-x-0 bottom-0 p-8">
                             <Badge variant="outline" className="!bg-white/90 !text-ink">
                                 {course.category}
                             </Badge>
-                            <h1 className="mt-6 font-display text-display-md">{course.title}</h1>
+                            <h1 className="mt-4 font-display text-display-md">{course.title}</h1>
+                            <div className="mt-4 flex flex-wrap items-center gap-4 text-sm font-semibold text-white/85">
+                                <span className="flex items-center gap-1.5">
+                                    <BookOpen className="size-4" />
+                                    {lessons.length} lesson{lessons.length === 1 ? "" : "s"}
+                                </span>
+                                <span className="flex items-center gap-1.5">
+                                    <Clock className="size-4" />
+                                    {formatDuration(totalMinutes)} total
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -99,7 +125,7 @@ function CourseDetailPage() {
                             )}
                         </div>
                         <ul className="mt-4 space-y-3">
-                                {(course.lessons ?? []).map((lesson) => (
+                                {lessons.map((lesson) => (
                                 <li
                                     key={lesson._id}
                                     className="flex items-center justify-between rounded-control border border-line bg-canvas p-4"
@@ -130,7 +156,11 @@ function CourseDetailPage() {
                         <Card.Body>
                             <p className="flex items-center gap-1.5 text-sm text-ink-soft">
                                 <BookOpen className="size-4" />
-                                {(course.lessons ?? []).length} Lesson(s) 
+                                {lessons.length} Lesson(s)
+                            </p>
+                            <p className="mt-2 flex items-center gap-1.5 text-sm text-ink-soft">
+                                <Clock className="size-4" />
+                                {formatDuration(totalMinutes)} total
                             </p>
                         </Card.Body>
                         <Card.Footer>

@@ -2,12 +2,17 @@ const Course = require("../models/Course")
 const Lesson = require("../models/Lesson")
 const asyncHandler = require("express-async-handler")
 const mongoose = require('mongoose');
-const { body, param, validationResult } = require("express-validator")
+const { body, param, query, validationResult } = require("express-validator")
 
 // --- validators ---
 
 const courseIdValidator = [
     param("courseId").isMongoId().withMessage("Invalid course id"),
+]
+
+const paginationValidators = [
+    query("page").optional().isInt({ min: 1 }).withMessage("page must be a positive integer"),
+    query("limit").optional().isInt({ min: 1, max: 100 }).withMessage("limit must be between 1 and 100"),
 ]
 
 const createCourseValidators = [
@@ -43,13 +48,30 @@ function sendValidationErrors(request, response) {
     return false
 }
 
-// public GET
+// public GET — paginated
 const getAllCourses = asyncHandler(async (request, response) => {
-        const courses = await Course.find({ isPublished: true }).lean() // only displays published courses, no drafts
-        if(!courses){
-            return response.status(400).json({message: "No courses found"})
-        }
-        response.json(courses)
+        if (sendValidationErrors(request, response)) return
+
+        const page = parseInt(request.query.page) || 1
+        const limit = parseInt(request.query.limit) || 12
+        const skip = (page - 1) * limit
+
+        const filter = { isPublished: true } // only displays published courses, no drafts
+
+        const [courses, totalItems] = await Promise.all([
+            Course.find(filter).skip(skip).limit(limit).lean(),
+            Course.countDocuments(filter),
+        ])
+
+        response.json({
+            courses,
+            pagination: {
+                totalItems,
+                totalPages: Math.ceil(totalItems / limit),
+                currentPage: page,
+                pageSize: limit,
+            },
+        })
 })
 
 const getMyCourses = asyncHandler(async (request, response) => {
@@ -79,8 +101,7 @@ const getSpecificCourse = asyncHandler(async (request, response) => {
 const createNewCourse = asyncHandler(async (request, response) => {
     if (sendValidationErrors(request, response)) return
 
-    console.log(request.user)
-    console.log(request.instructorId)
+
     const {title, description, category, price, thumbnail, isPublished} = request.body
 
     // Scoped to this instructor only — two different instructors can use the same
@@ -159,6 +180,7 @@ module.exports =
     updateCourse,
     deleteCourse,
     courseIdValidator,
+    paginationValidators,
     createCourseValidators,
     updateCourseValidators,
 }
