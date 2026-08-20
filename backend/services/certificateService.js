@@ -8,7 +8,7 @@ const {
   isLikelyDuplicateResponse,
 } = require('../contracts/certificateContract');
  
-const CERT_SERVICE_URL = process.env.CERT_SERVICE_URL || 'http://localhost:5000/api/v1/certificates';
+const CERT_SERVICE_URL = process.env.CERT_SERVICE_URL;
  
 
 const checkAndTriggerCertificate = async ({ studentId, courseId, quizPassed }) => {

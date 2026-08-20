@@ -2,7 +2,7 @@
 import axios from 'axios';
  
 // Single source of truth for the API base URL — never hardcode it elsewhere.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
  
 const api = axios.create({
   baseURL: API_BASE_URL,
