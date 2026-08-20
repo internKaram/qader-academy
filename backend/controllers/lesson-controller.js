@@ -1,19 +1,60 @@
 const Lesson = require("../models/Lesson")
 const Course = require("../models/Course")
 const asyncHandler = require("express-async-handler")
+const { body, param, validationResult } = require("express-validator")
 
-const getAllLessons = asyncHandler( async (request, response)=> {
+// --- validators ---
 
+const lessonParamsValidators = [
+    param("courseId").isMongoId().withMessage("Invalid course id"),
+    param("lessonId").isMongoId().withMessage("Invalid lesson id"),
+]
 
+const createLessonValidators = [
+    param("courseId").isMongoId().withMessage("Invalid course id"),
+    body("title").trim().notEmpty().withMessage("Title is required"),
+    body("contentUrl").trim().notEmpty().withMessage("Content URL is required")
+        .bail().isURL().withMessage("Content URL must be a valid URL"),
+    body("duration")
+        .exists({ checkFalsy: false }).withMessage("Duration is required")
+        .bail().isFloat({ min: 0 }).withMessage("Duration must be a positive number"),
+    body("orderIndex")
+        .exists({ checkFalsy: false }).withMessage("Order index is required")
+        .bail().isInt({ min: 0 }).withMessage("Order index must be a non-negative integer"),
+]
 
-}) 
+const updateLessonValidators = [
+    param("courseId").isMongoId().withMessage("Invalid course id"),
+    param("lessonId").isMongoId().withMessage("Invalid lesson id"),
+    body("title").optional().trim().notEmpty().withMessage("Title cannot be empty"),
+    body("contentUrl").optional().trim().isURL().withMessage("Content URL must be a valid URL"),
+    body("duration").optional().isFloat({ min: 0 }).withMessage("Duration must be a positive number"),
+    body("orderIndex").optional().isInt({ min: 0 }).withMessage("Order index must be a non-negative integer"),
+]
+
+const reorderLessonsValidators = [
+    param("courseId").isMongoId().withMessage("Invalid course id"),
+    body("lessons").isArray({ min: 1 }).withMessage("lessons array is required"),
+    body("lessons.*.lessonId").isMongoId().withMessage("Each lesson must have a valid lessonId"),
+    body("lessons.*.orderIndex").isInt({ min: 0 }).withMessage("Each lesson must have a valid orderIndex"),
+]
+
+function sendValidationErrors(request, response) {
+    const errors = validationResult(request)
+    if (!errors.isEmpty()) {
+        response.status(400).json({
+            errors: errors.array().map(e => ({ field: e.path, message: e.msg }))
+        })
+        return true
+    }
+    return false
+}
 
 const createNewLesson = asyncHandler(async (request, response) => {
+    if (sendValidationErrors(request, response)) return
+
     const { courseId } = request.params
     const {title, contentUrl, duration, orderIndex} = request.body
-    if(!title || !contentUrl || !duration || !orderIndex){
-        return response.status(400).json({message: "Please fill all required fields"})
-    }
 
     const course = await Course.findById(courseId)
     if (!course) {
@@ -45,6 +86,8 @@ const createNewLesson = asyncHandler(async (request, response) => {
 
 
 const updateLesson = asyncHandler(async (request, response) => {
+    if (sendValidationErrors(request, response)) return
+
     const { courseId, lessonId } = request.params
     const { title, contentUrl, duration, orderIndex } = request.body
 
@@ -74,6 +117,8 @@ const updateLesson = asyncHandler(async (request, response) => {
 
 
 const deleteLesson = asyncHandler(async (request, response) => {
+    if (sendValidationErrors(request, response)) return
+
     const { courseId, lessonId } = request.params
 
     const course = await Course.findById(courseId)
@@ -96,6 +141,8 @@ const deleteLesson = asyncHandler(async (request, response) => {
 
 
 const reorderLessons = asyncHandler(async (request, response) => {
+    if (sendValidationErrors(request, response)) return
+
     const { courseId } = request.params
     const { lessons } = request.body // expects [{ lessonId, orderIndex }, ...]
 
@@ -105,17 +152,6 @@ const reorderLessons = asyncHandler(async (request, response) => {
     }
     if (course.instructorId.toString() !== request.user.userId) {
         return response.status(403).json({ message: "Unauthorized to reorder lessons on this course" })
-    }
-
-    if (!Array.isArray(lessons) || lessons.length === 0) {
-        return response.status(400).json({ message: "lessons array is required" })
-    }
-
-    const isValid = lessons.every(
-        (item) => item && item.lessonId && typeof item.orderIndex === 'number' && Number.isInteger(item.orderIndex) && item.orderIndex >= 0
-    );
-    if (!isValid) {
-        return response.status(400).json({ message: "Each lesson item must contain a valid lessonId and positive integer orderIndex" });
     }
 
     const updateOperations = lessons.map(({ lessonId, orderIndex }) => ({
@@ -132,11 +168,14 @@ const reorderLessons = asyncHandler(async (request, response) => {
 })
 
 
-module.exports = 
+module.exports =
 {
-    getAllLessons,
     createNewLesson,
     updateLesson,
     deleteLesson,
-    reorderLessons
+    reorderLessons,
+    lessonParamsValidators,
+    createLessonValidators,
+    updateLessonValidators,
+    reorderLessonsValidators,
 }
