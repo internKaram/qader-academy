@@ -1,0 +1,538 @@
+openapi: 3.0.3
+info:
+  title: Qader Academy API — Courses & Lessons
+  description: >
+    Course and lesson authoring endpoints for the Qader Academy LMS.
+    This document covers the course/lesson section of the API only.
+    Other resources (auth, users, enrollments, etc.) are documented separately
+    and will be merged into this spec as they're completed.
+  version: 1.0.0
+servers:
+  - url: /api/v1
+    description: Relative to wherever the app is hosted
+
+tags:
+  - name: Courses
+    description: Course creation, editing, and browsing
+  - name: Lessons
+    description: Lesson management within a course
+
+security:
+  - bearerAuth: []
+
+paths:
+  /courses:
+    get:
+      tags: [Courses]
+      summary: List all published courses
+      description: Public endpoint. Returns only courses where isPublished is true.
+      security: []
+      responses:
+        "200":
+          description: List of published courses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Course"
+    post:
+      tags: [Courses]
+      summary: Create a new course
+      description: Requires instructor or admin role. Course titles must be unique per instructor.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseCreateInput"
+            examples:
+              valid:
+                value:
+                  title: "Intro to Web Dev"
+                  description: "Learn the basics of HTML, CSS, and JS"
+                  category: "Front-end"
+                  price: 199
+                  thumbnail: "https://example.com/thumb.jpg"
+                  isPublished: false
+      responses:
+        "201":
+          description: Course created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Course Intro to Web Dev created successfuly"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: Instructor already has a course with this title
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /courses/mine:
+    get:
+      tags: [Courses]
+      summary: List the authenticated instructor's own courses
+      description: Requires instructor or admin role. Returns drafts and published courses.
+      responses:
+        "200":
+          description: List of the instructor's courses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Course"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /courses/{courseId}:
+    parameters:
+      - $ref: "#/components/parameters/CourseId"
+    get:
+      tags: [Courses]
+      summary: Get a single course with its lessons
+      security: []
+      responses:
+        "200":
+          description: Course with embedded lessons array
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseWithLessons"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Courses]
+      summary: Update a course
+      description: Requires instructor or admin role. Only the owning instructor may update. All fields optional — only provided fields are updated.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseUpdateInput"
+      responses:
+        "200":
+          description: Updated course
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Courses]
+      summary: Delete a course
+      description: Requires instructor or admin role. Only the owning instructor may delete. Cascades — deletes all lessons belonging to the course.
+      responses:
+        "200":
+          description: Course and its lessons deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /courses/{courseId}/lessons:
+    parameters:
+      - $ref: "#/components/parameters/CourseId"
+    post:
+      tags: [Lessons]
+      summary: Create a lesson within a course
+      description: Requires instructor or admin role. Only the owning instructor may add lessons. Lesson titles must be unique per course.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LessonCreateInput"
+            examples:
+              valid:
+                value:
+                  title: "Setting up your environment"
+                  contentUrl: "https://example.com/lesson1.mp4"
+                  duration: 15
+                  orderIndex: 1
+      responses:
+        "201":
+          description: Lesson created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Lesson Setting up your environment created successfuly"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Course already has a lesson with this title
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /courses/{courseId}/lessons/reorder:
+    parameters:
+      - $ref: "#/components/parameters/CourseId"
+    patch:
+      tags: [Lessons]
+      summary: Reorder lessons within a course
+      description: Requires instructor or admin role. Only the owning instructor may reorder. Accepts the full new order as a list of lessonId/orderIndex pairs.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReorderLessonsInput"
+            examples:
+              valid:
+                value:
+                  lessons:
+                    - lessonId: "665f1a2b3c4d5e6f7a8b9c0d"
+                      orderIndex: 1
+                    - lessonId: "665f1a2b3c4d5e6f7a8b9c0e"
+                      orderIndex: 2
+      responses:
+        "200":
+          description: Lessons in their new order
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Lesson"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /courses/{courseId}/lessons/{lessonId}:
+    parameters:
+      - $ref: "#/components/parameters/CourseId"
+      - $ref: "#/components/parameters/LessonId"
+    patch:
+      tags: [Lessons]
+      summary: Update a lesson
+      description: Requires instructor or admin role. Only the owning instructor may update. All fields optional — only provided fields are updated.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LessonUpdateInput"
+      responses:
+        "200":
+          description: Updated lesson
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lesson"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Lessons]
+      summary: Delete a lesson
+      description: Requires instructor or admin role. Only the owning instructor may delete.
+      responses:
+        "200":
+          description: Lesson deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        JWT issued at login, sent as `Authorization: Bearer <token>`.
+        Decoded payload must include a userId claim.
+
+  parameters:
+    CourseId:
+      name: courseId
+      in: path
+      required: true
+      description: MongoDB ObjectId of the course
+      schema:
+        type: string
+        example: "665f1a2b3c4d5e6f7a8b9c0d"
+    LessonId:
+      name: lessonId
+      in: path
+      required: true
+      description: MongoDB ObjectId of the lesson
+      schema:
+        type: string
+        example: "665f1a2b3c4d5e6f7a8b9c0e"
+
+  responses:
+    ValidationError:
+      description: One or more fields failed validation
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ValidationErrorResponse"
+          example:
+            errors:
+              - field: "title"
+                message: "Title is required"
+              - field: "price"
+                message: "Price must be a positive number"
+    Unauthorized:
+      description: Missing, invalid, or expired token
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/MessageResponse"
+          example:
+            message: "Not authorized, no token provided"
+    Forbidden:
+      description: Authenticated but not permitted to perform this action
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/MessageResponse"
+          example:
+            message: "Unauthorized to update this course"
+    NotFound:
+      description: Resource does not exist
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/MessageResponse"
+          example:
+            message: "Course does not exist"
+
+  schemas:
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
+    ValidationErrorResponse:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                description: Name of the invalid field (dot/bracket notation for nested or array fields, e.g. "lessons[0].lessonId")
+              message:
+                type: string
+                description: Human-readable reason the field failed validation
+
+    Course:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "665f1a2b3c4d5e6f7a8b9c0d"
+        title:
+          type: string
+          example: "Intro to Web Dev"
+        description:
+          type: string
+          example: "Learn the basics of HTML, CSS, and JS"
+        thumbnail:
+          type: string
+          example: "https://example.com/thumb.jpg"
+        category:
+          type: string
+          example: "Front-end"
+        instructorId:
+          type: string
+          example: "665f1a2b3c4d5e6f7a8b9c00"
+        price:
+          type: number
+          example: 199
+        isPublished:
+          type: boolean
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+
+    CourseWithLessons:
+      allOf:
+        - $ref: "#/components/schemas/Course"
+        - type: object
+          properties:
+            lessons:
+              type: array
+              items:
+                $ref: "#/components/schemas/Lesson"
+
+    CourseCreateInput:
+      type: object
+      required: [title, description, category, price]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        price:
+          type: number
+          minimum: 0
+        thumbnail:
+          type: string
+          format: uri
+        isPublished:
+          type: boolean
+          default: false
+
+    CourseUpdateInput:
+      type: object
+      description: All fields optional — only supplied fields are updated.
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        price:
+          type: number
+          minimum: 0
+        thumbnail:
+          type: string
+          format: uri
+        isPublished:
+          type: boolean
+
+    Lesson:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "665f1a2b3c4d5e6f7a8b9c0e"
+        courseId:
+          type: string
+          example: "665f1a2b3c4d5e6f7a8b9c0d"
+        title:
+          type: string
+          example: "Setting up your environment"
+        contentUrl:
+          type: string
+          example: "https://example.com/lesson1.mp4"
+        duration:
+          type: number
+          description: Duration in minutes
+          example: 15
+        orderIndex:
+          type: integer
+          example: 1
+
+    LessonCreateInput:
+      type: object
+      required: [title, contentUrl, duration, orderIndex]
+      properties:
+        title:
+          type: string
+        contentUrl:
+          type: string
+          format: uri
+        duration:
+          type: number
+          minimum: 0
+        orderIndex:
+          type: integer
+          minimum: 0
+
+    LessonUpdateInput:
+      type: object
+      description: All fields optional — only supplied fields are updated.
+      properties:
+        title:
+          type: string
+        contentUrl:
+          type: string
+          format: uri
+        duration:
+          type: number
+          minimum: 0
+        orderIndex:
+          type: integer
+          minimum: 0
+
+    ReorderLessonsInput:
+      type: object
+      required: [lessons]
+      properties:
+        lessons:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [lessonId, orderIndex]
+            properties:
+              lessonId:
+                type: string
+              orderIndex:
+                type: integer
+                minimum: 0

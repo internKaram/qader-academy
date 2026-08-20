@@ -1,13 +1,16 @@
 const express = require('express');
 const router = express.Router();
+const { body } = require('express-validator');
 const { enrollInCourse, getStudentEnrollments } = require('../controllers/enrollmentController');
 const authMiddleware = require('../middlewares/auth-middleware');
-const rbacMiddleware = require('../middlewares/rbac-middleware');
+const validateRequest = require('../middlewares/validateRequest');
 
-router
-  .route('/')
-  .post(authMiddleware, rbacMiddleware('student'), enrollInCourse)       // POST /api/v1/enrollments
-  .get(authMiddleware, rbacMiddleware('student'), getStudentEnrollments); // GET  /api/v1/enrollments
+const enrollValidators = [
+  body('courseId').isMongoId().withMessage('courseId must be a valid id'),
+];
+
+router.post('/', authMiddleware, enrollValidators, validateRequest, enrollInCourse);
+router.get('/', authMiddleware, getStudentEnrollments);
 
 module.exports = router;
-
+ 

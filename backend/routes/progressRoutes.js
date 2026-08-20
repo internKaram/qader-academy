@@ -1,39 +1,28 @@
 const express = require('express');
 const router = express.Router();
-
-// Controllers
+const { body, param } = require('express-validator');
 const {
   markLessonComplete,
-  getProgress,
-  getCompletionStatus
+  getCourseProgress,
+  getAllProgress,
+  getCompletionStatus,
 } = require('../controllers/progressController');
-
-// New unified middlewares (replace protect everywhere)
 const authMiddleware = require('../middlewares/auth-middleware');
-const rbacMiddleware = require('../middlewares/rbac-middleware');
+const validateRequest = require('../middlewares/validateRequest');
 
-// POST /api/v1/progress
-router.post(
-  '/',
-  authMiddleware,
-  rbacMiddleware('student'),
-  markLessonComplete
-);
+const markCompleteValidators = [
+  body('courseId').isMongoId().withMessage('courseId must be a valid id'),
+  body('lessonId').isMongoId().withMessage('lessonId must be a valid id'),
+];
 
-// GET /api/v1/progress/:courseId
-router.get(
-  '/:courseId',
-  authMiddleware,
-  rbacMiddleware('student'),
-  getProgress
-);
+const courseIdParamValidator = [
+  param('courseId').isMongoId().withMessage('courseId must be a valid id'),
+];
 
-// GET /api/v1/progress/:courseId/completion-status
-router.get(
-  '/:courseId/completion-status',
-  authMiddleware,
-  rbacMiddleware('student'),
-  getCompletionStatus
-);
+router.post('/', authMiddleware, markCompleteValidators, validateRequest, markLessonComplete);
+router.get('/', authMiddleware, getAllProgress);
+router.get('/:courseId/completion-status', authMiddleware, courseIdParamValidator, validateRequest, getCompletionStatus);
+router.get('/:courseId', authMiddleware, courseIdParamValidator, validateRequest, getCourseProgress);
 
 module.exports = router;
+ 

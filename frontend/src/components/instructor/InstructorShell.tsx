@@ -39,8 +39,17 @@ export function InstructorShell({ eyebrow = 'Instructor workspace', title, descr
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  const displayName = user?.name || user?.email || instructorProfile.name;
+  const displayRole = user?.role || instructorProfile.role;
+  const avatarInitials = (user?.name || user?.email || 'IN')
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
   useEffect(() => {
     if (!profileMenuOpen) {
@@ -110,11 +119,11 @@ export function InstructorShell({ eyebrow = 'Instructor workspace', title, descr
                 type="button"
               >
                 <span className="grid size-10 place-items-center rounded-full bg-brand-50 text-sm font-black text-brand-700">
-                  {instructorProfile.avatarInitials}
+                  {avatarInitials}
                 </span>
                 <span className="text-right">
-                  <span className="block text-sm font-bold text-ink">{instructorProfile.name}</span>
-                  <span className="block text-xs font-semibold text-ink-muted">{instructorProfile.role}</span>
+                  <span className="block text-sm font-bold text-ink">{displayName}</span>
+                  <span className="block text-xs font-semibold text-ink-muted">{displayRole}</span>
                 </span>
                 <ChevronDown className={['size-4 text-ink-muted transition', profileMenuOpen ? 'rotate-180' : ''].join(' ')} />
               </button>
@@ -161,7 +170,7 @@ export function InstructorShell({ eyebrow = 'Instructor workspace', title, descr
                 className="grid size-9 place-items-center rounded-full bg-brand-50 text-sm font-black text-brand-700"
                 to={instructorProfile.publicPath}
               >
-                {instructorProfile.avatarInitials}
+                {avatarInitials}
               </Link>
               <Button
                 aria-label={mobileMenuOpen ? 'Close instructor navigation' : 'Open instructor navigation'}
