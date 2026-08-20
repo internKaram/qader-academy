@@ -13,6 +13,7 @@ import { Button, Card, Input, Spinner } from "../components/ui"
 import { useAuth } from "../hooks/useAuth"
 import api from "../api/axios"
 import type { Lesson, CourseWithLessons } from "../types/course"
+import { extractFieldErrors, isFieldValidationError } from "../api/apiErrors"
 
 interface LessonRowProps {
     lesson: Lesson
@@ -21,13 +22,13 @@ interface LessonRowProps {
 }
 
 function SortableLessonRow({ lesson, onSave, onDelete }: LessonRowProps) {
-    console.log("EDITOR PAGE IS RENDERED")
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: lesson._id })
     const [title, setTitle] = useState(lesson.title)
     const [contentUrl, setContentUrl] = useState(lesson.contentUrl)
     const [duration, setDuration] = useState(String(lesson.duration))
     const [saving, setSaving] = useState(false)
     const [dirty, setDirty] = useState(false)
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -39,11 +40,27 @@ function SortableLessonRow({ lesson, onSave, onDelete }: LessonRowProps) {
         setDirty(true)
     }
 
+    function clearFieldError(field: string) {
+        if (!fieldErrors[field]) return
+        setFieldErrors((prev) => {
+            const next = { ...prev }
+            delete next[field]
+            return next
+        })
+    }
+
     async function handleSave() {
         setSaving(true)
+        setFieldErrors({})
         try {
             await onSave(lesson._id, { title, contentUrl, duration: Number(duration) })
             setDirty(false)
+        } catch (err) {
+            if (isFieldValidationError(err)) {
+                setFieldErrors(extractFieldErrors(err))
+            }
+            // non-validation failures are left to the caller/global handling;
+            // dirty stays true so the user's edits aren't lost
         } finally {
             setSaving(false)
         }
@@ -67,20 +84,23 @@ function SortableLessonRow({ lesson, onSave, onDelete }: LessonRowProps) {
                         id={`title-${lesson._id}`}
                         label="Lesson title"
                         value={title}
-                        onChange={(e) => { setTitle(e.target.value); markDirty() }}
+                        onChange={(e) => { setTitle(e.target.value); markDirty(); clearFieldError("title") }}
+                        error={fieldErrors.title}
                     />
                     <Input
                         id={`url-${lesson._id}`}
                         label="Content URL"
                         value={contentUrl}
-                        onChange={(e) => { setContentUrl(e.target.value); markDirty() }}
+                        onChange={(e) => { setContentUrl(e.target.value); markDirty(); clearFieldError("contentUrl") }}
+                        error={fieldErrors.contentUrl}
                     />
                     <Input
                         id={`duration-${lesson._id}`}
                         label="Duration (min)"
                         type="number"
                         value={duration}
-                        onChange={(e) => { setDuration(e.target.value); markDirty() }}
+                        onChange={(e) => { setDuration(e.target.value); markDirty(); clearFieldError("duration") }}
+                        error={fieldErrors.duration}
                     />
                 </div>
 
@@ -104,7 +124,6 @@ function SortableLessonRow({ lesson, onSave, onDelete }: LessonRowProps) {
 
 function LessonEditorPage() {
     const { courseId } = useParams<{ courseId: string }>()
-    console.log(courseId);
     const navigate = useNavigate()
     const { user } = useAuth()
 
@@ -117,6 +136,7 @@ function LessonEditorPage() {
     const [newContentUrl, setNewContentUrl] = useState("")
     const [newDuration, setNewDuration] = useState("")
     const [creating, setCreating] = useState(false)
+    const [newLessonErrors, setNewLessonErrors] = useState<Record<string, string>>({})
 
     const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
@@ -152,9 +172,19 @@ function LessonEditorPage() {
         setLessons((prev) => prev.filter((l) => l._id !== lessonId))
     }
 
+    function clearNewLessonError(field: string) {
+        if (!newLessonErrors[field]) return
+        setNewLessonErrors((prev) => {
+            const next = { ...prev }
+            delete next[field]
+            return next
+        })
+    }
+
     async function handleCreateLesson() {
         if (!newTitle.trim() || !newContentUrl.trim() || !newDuration.trim()) return
         setCreating(true)
+        setNewLessonErrors({})
         try {
             const nextOrderIndex = lessons.length > 0 ? Math.max(...lessons.map((l) => l.orderIndex)) + 1 : 1
             await api.post(`/courses/${courseId}/lessons`, {
@@ -168,6 +198,12 @@ function LessonEditorPage() {
             setNewTitle("")
             setNewContentUrl("")
             setNewDuration("")
+        } catch (err) {
+            if (isFieldValidationError(err)) {
+                setNewLessonErrors(extractFieldErrors(err))
+            } else {
+                setError("Failed to add lesson. Please try again.")
+            }
         } finally {
             setCreating(false)
         }
@@ -192,10 +228,19 @@ function LessonEditorPage() {
 
         try {
             await api.patch(`/courses/${courseId}/lessons/reorder`, { lessons: payload })
-        } catch {
+        } catch (err) {
             // Roll back rather than leaving the UI showing an order that was never actually saved
             setLessons(previousLessons)
-            setError("Failed to save new order. Your previous order has been restored.")
+
+            // Reorder errors are array-indexed (e.g. "lessons[0].lessonId") rather than
+            // tied to a single visible input, so there's no field to attach them to —
+            // show the messages directly instead of trying to map them onto a row.
+            if (isFieldValidationError(err)) {
+                const messages = Object.values(extractFieldErrors(err))
+                setError(messages.length > 0 ? messages.join(" ") : "Failed to save new order. Your previous order has been restored.")
+            } else {
+                setError("Failed to save new order. Your previous order has been restored.")
+            }
         }
     }
 
@@ -255,7 +300,8 @@ function LessonEditorPage() {
                                 hint="Give the lesson a short, descriptive name."
                                 placeholder="e.g. Setting up your development environment"
                                 value={newTitle}
-                                onChange={(e) => setNewTitle(e.target.value)}
+                                onChange={(e) => { setNewTitle(e.target.value); clearNewLessonError("title") }}
+                                error={newLessonErrors.title}
                             />
 
                             <Input
@@ -264,7 +310,8 @@ function LessonEditorPage() {
                                 hint="Paste the link students should use to access this lesson's content."
                                 placeholder="https://..."
                                 value={newContentUrl}
-                                onChange={(e) => setNewContentUrl(e.target.value)}
+                                onChange={(e) => { setNewContentUrl(e.target.value); clearNewLessonError("contentUrl") }}
+                                error={newLessonErrors.contentUrl}
                             />
 
                             <Input
@@ -274,7 +321,8 @@ function LessonEditorPage() {
                                 hint="Enter the estimated number of minutes students need to complete this lesson."
                                 placeholder="e.g. 20"
                                 value={newDuration}
-                                onChange={(e) => setNewDuration(e.target.value)}
+                                onChange={(e) => { setNewDuration(e.target.value); clearNewLessonError("duration") }}
+                                error={newLessonErrors.duration}
                             />
                         </div>
                     </Card.Body>

@@ -5,12 +5,8 @@ import { useDraftState } from "../hooks/useDraftState"
 import api from "../api/axios"
 import { Link } from "react-router-dom"
 import { ArrowLeft } from "lucide-react"
+import { extractFieldErrors, isFieldValidationError } from "../api/apiErrors"
 
-// inside the return, right after <div className="page-container max-w-3xl">
-<Link to="/catalog" className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-ink-soft transition hover:text-brand-700">
-    <ArrowLeft className="size-4" />
-    Cancel and back to catalog
-</Link>
 interface CourseDraft {
     title: string
     description: string
@@ -18,7 +14,6 @@ interface CourseDraft {
     price: string
     thumbnail: string
     isPublished: boolean
-
 }
 
 const emptyDraft: CourseDraft = {
@@ -28,10 +23,28 @@ const emptyDraft: CourseDraft = {
     price: "",
     thumbnail: "",
     isPublished: false,
-
 }
 
 const steps = ["Basics", "Details & Pricing", "Thumbnail", "Review"] as const
+
+// Maps a backend field name to the wizard step that contains it, so a 400
+// on submit can send the user back to the step with the actual problem.
+const fieldToStep: Record<string, number> = {
+    title: 0,
+    description: 1,
+    category: 1,
+    price: 1,
+    thumbnail: 2,
+}
+
+// Inverse of the above — which fields live on a given step, so Next can be
+// blocked while any of that step's fields still has an unresolved error.
+const stepFields: Record<number, string[]> = {
+    0: ["title"],
+    1: ["description", "category", "price"],
+    2: ["thumbnail"],
+    3: [],
+}
 
 function CourseWizardPage() {
     const { courseId } = useParams<{ courseId?: string }>()
@@ -44,6 +57,7 @@ function CourseWizardPage() {
     const [loading, setLoading] = useState<boolean>(isEditMode)
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
     useEffect(() => {
         if (!isEditMode) return
@@ -71,67 +85,73 @@ function CourseWizardPage() {
 
     function updateField<K extends keyof CourseDraft>(key: K, value: CourseDraft[K]) {
         setDraft((prev) => ({ ...prev, [key]: value }))
+        // Clear that field's error the moment the user edits it, rather than
+        // leaving a stale error visible after they've already fixed it.
+        if (fieldErrors[key as string]) {
+            setFieldErrors((prev) => {
+                const next = { ...prev }
+                delete next[key as string]
+                return next
+            })
+        }
     }
 
     function canProceed(): boolean {
+        // A field with a pending server-side error blocks Next regardless of
+        // the basic non-empty checks below — the user must fix it first.
+        const hasBlockingError = stepFields[currentStep]?.some((field) => Boolean(fieldErrors[field]))
+        if (hasBlockingError) return false
+
         if (currentStep === 0) return draft.title.trim().length > 0
         if (currentStep === 1) return draft.description.trim().length > 0 && draft.category.trim().length > 0 && draft.price.trim().length > 0
         return true
     }
 
-// async function handlePublish() {
-//     setSubmitting(true)
-//     setError(null)
+    async function handleSubmit(isPublished: boolean) { // boolean set to true if "Publish Course" button is clicked, otherwise it will be a draft
+        setSubmitting(true)
+        setError(null)
+        setFieldErrors({})
 
-//     try {
-//         const payload = {
-//             title: draft.title,
-//             description: draft.description,
-//             category: draft.category,
-//             price: Number(draft.price),
-//             thumbnail: draft.thumbnail,
-//             isPublished: true,
-//         }
+        try {
+            const payload = {
+                title: draft.title,
+                description: draft.description,
+                category: draft.category,
+                price: Number(draft.price),
+                thumbnail: draft.thumbnail,
+                isPublished: isPublished,
+            }
 
-//         await api.patch(`/courses/${courseId}`, payload)
+            if (isEditMode) {
+                await api.patch(`/courses/${courseId}`, payload)
+            } else {
+                await api.post("/courses", payload)
+            }
 
-//         clearDraft()
-//         navigate("/courses")
-//     } catch {
-//         setError("Failed to publish course. Please try again.")
-//     } finally {
-//         setSubmitting(false)
-//     }
-// }
+            clearDraft()
+            navigate("/catalog")
+        } catch (err) {
+            if (isFieldValidationError(err)) {
+                const errors = extractFieldErrors(err)
+                setFieldErrors(errors)
+                setError("Please fix the highlighted fields.")
 
- async function handleSubmit(isPublished: boolean) { // boolean set to true if "Publish Course" button is clicked, otherwise it will be a draft
-    setSubmitting(true)
-    setError(null)
-
-    try {
-        const payload = {
-            title: draft.title,
-            description: draft.description,
-            category: draft.category,
-            price: Number(draft.price),
-            thumbnail: draft.thumbnail,
-            isPublished: isPublished,
+                // Jump back to the earliest step that has an errored field so
+                // the user isn't stuck on Review looking at nothing wrong.
+                const erroredSteps = Object.keys(errors)
+                    .map((field) => fieldToStep[field])
+                    .filter((step) => step !== undefined)
+                if (erroredSteps.length > 0) {
+                    setCurrentStep(Math.min(...erroredSteps))
+                }
+            } else {
+                setError("Failed to save course. Please check your fields and try again.")
+            }
+        } finally {
+            setSubmitting(false)
         }
-    
-        if (isEditMode) {
-            await api.patch(`/courses/${courseId}`, payload)
-        } else {
-            await api.post("/courses", payload)
-        }
-
-        clearDraft()
-        navigate("/catalog")
-    } catch {
-        setError("Failed to save course. Please check your fields and try again.")
-    } finally {
-        setSubmitting(false)
     }
-}
+
     if (loading) {
         return <main className="grid min-h-screen place-items-center bg-canvas-soft">Loading...</main>
     }
@@ -140,8 +160,8 @@ function CourseWizardPage() {
         <main className="min-h-screen bg-canvas-soft py-10 text-ink">
             <div className="page-container max-w-3xl">
                 <Link to="/catalog" className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-ink-soft transition hover:text-brand-700">
-                <ArrowLeft className="size-4" />
-                Cancel and back to catalog
+                    <ArrowLeft className="size-4" />
+                    Cancel and back to catalog
                 </Link>
                 <p className="eyebrow">{isEditMode ? "Edit course" : "New course"}</p>
                 <h1 className="mt-3 font-display text-heading-lg">
@@ -170,6 +190,7 @@ function CourseWizardPage() {
                                     placeholder="e.g. Introduction to Web Development"
                                     value={draft.title}
                                     onChange={(e) => updateField("title", e.target.value)}
+                                    error={fieldErrors.title}
                                 />
                             </div>
                         )}
@@ -185,6 +206,7 @@ function CourseWizardPage() {
                                     placeholder="Describe the main topics, skills, and outcomes students can expect..."
                                     value={draft.description}
                                     onChange={(e) => updateField("description", e.target.value)}
+                                    error={fieldErrors.description}
                                 />
                                 <Input
                                     id="wizard-category"
@@ -194,6 +216,7 @@ function CourseWizardPage() {
                                     placeholder="e.g. Front-end, Back-end, AI"
                                     value={draft.category}
                                     onChange={(e) => updateField("category", e.target.value)}
+                                    error={fieldErrors.category}
                                 />
                                 <Input
                                     id="wizard-price"
@@ -202,6 +225,7 @@ function CourseWizardPage() {
                                     type="number"
                                     value={draft.price}
                                     onChange={(e) => updateField("price", e.target.value)}
+                                    error={fieldErrors.price}
                                 />
                             </div>
                         )}
@@ -216,6 +240,7 @@ function CourseWizardPage() {
                                     hint="Paste a link to an already-hosted image."
                                     value={draft.thumbnail}
                                     onChange={(e) => updateField("thumbnail", e.target.value)}
+                                    error={fieldErrors.thumbnail}
                                 />
                                 {draft.thumbnail && (
                                     <div className="space-y-2">
@@ -244,44 +269,44 @@ function CourseWizardPage() {
                         )}
                     </Card.Body>
 
-                   <Card.Footer className="justify-between">
-    <Button
-        variant="outline"
-        disabled={currentStep === 0}
-        onClick={() => setCurrentStep((s) => s - 1)}
-    >
-        Back
-    </Button>
+                    <Card.Footer className="justify-between">
+                        <Button
+                            variant="outline"
+                            disabled={currentStep === 0}
+                            onClick={() => setCurrentStep((s) => s - 1)}
+                        >
+                            Back
+                        </Button>
 
-    {currentStep < steps.length - 1 ? (
-        <Button
-            disabled={!canProceed()}
-            onClick={() => setCurrentStep((s) => s + 1)}
-        >
-            Next
-        </Button>
-    ) : (
-        <div className="flex gap-3">
-            <Button
-                variant="outline"
-                loading={submitting}
-                onClick={() => handleSubmit(false)}
-            >
-                {isEditMode ? "Save changes" : "Save as draft"}
-            </Button>
+                        {currentStep < steps.length - 1 ? (
+                            <Button
+                                disabled={!canProceed()}
+                                onClick={() => setCurrentStep((s) => s + 1)}
+                            >
+                                Next
+                            </Button>
+                        ) : (
+                            <div className="flex gap-3">
+                                <Button
+                                    variant="outline"
+                                    loading={submitting}
+                                    onClick={() => handleSubmit(false)}
+                                >
+                                    {isEditMode ? "Save changes" : "Save as draft"}
+                                </Button>
 
-            {(!isEditMode || !draft.isPublished) && (
-                <Button
-                    variant="create"
-                    loading={submitting}
-                    onClick={() => handleSubmit(true)}
-                >
-                    Publish course
-                </Button>
-            )}
-        </div>
-    )}
-</Card.Footer>
+                                {(!isEditMode || !draft.isPublished) && (
+                                    <Button
+                                        variant="create"
+                                        loading={submitting}
+                                        onClick={() => handleSubmit(true)}
+                                    >
+                                        Publish course
+                                    </Button>
+                                )}
+                            </div>
+                        )}
+                    </Card.Footer>
                 </Card>
             </div>
         </main>
