@@ -83,6 +83,7 @@ function SortableLessonRow({ lesson, onSave, onDelete }: LessonRowProps) {
                     <Input
                         id={`title-${lesson._id}`}
                         label="Lesson title"
+                        hint="Give the lesson a short, descriptive name."
                         value={title}
                         onChange={(e) => { setTitle(e.target.value); markDirty(); clearFieldError("title") }}
                         error={fieldErrors.title}
@@ -90,6 +91,7 @@ function SortableLessonRow({ lesson, onSave, onDelete }: LessonRowProps) {
                     <Input
                         id={`url-${lesson._id}`}
                         label="Content URL"
+                        hint="The link students use to access this lesson's content."
                         value={contentUrl}
                         onChange={(e) => { setContentUrl(e.target.value); markDirty(); clearFieldError("contentUrl") }}
                         error={fieldErrors.contentUrl}
@@ -98,6 +100,7 @@ function SortableLessonRow({ lesson, onSave, onDelete }: LessonRowProps) {
                         id={`duration-${lesson._id}`}
                         label="Duration (min)"
                         type="number"
+                        hint="Estimated minutes to complete."
                         value={duration}
                         onChange={(e) => { setDuration(e.target.value); markDirty(); clearFieldError("duration") }}
                         error={fieldErrors.duration}
@@ -273,20 +276,27 @@ function LessonEditorPage() {
                 <h1 className="mt-3 font-display text-heading-lg">{courseTitle}</h1>
                 <p className="mt-2 text-ink-soft">Drag lessons to reorder. Edit fields and click Save to update.</p>
 
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                    <SortableContext items={lessons.map((l) => l._id)} strategy={verticalListSortingStrategy}>
-                        <div className="mt-6 space-y-3">
-                            {lessons.map((lesson) => (
-                                <SortableLessonRow
-                                    key={lesson._id}
-                                    lesson={lesson}
-                                    onSave={handleSaveLesson}
-                                    onDelete={handleDeleteLesson}
-                                />
-                            ))}
-                        </div>
-                    </SortableContext>
-                </DndContext>
+                {lessons.length === 0 ? (
+                    <div className="mt-6 rounded-control border border-dashed border-line-strong bg-canvas-soft p-8 text-center">
+                        <h3 className="font-display text-heading-sm">No lessons yet.</h3>
+                        <p className="mt-2 text-ink-soft">Add your first lesson using the form below to get started.</p>
+                    </div>
+                ) : (
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                        <SortableContext items={lessons.map((l) => l._id)} strategy={verticalListSortingStrategy}>
+                            <div className="mt-6 space-y-3">
+                                {lessons.map((lesson) => (
+                                    <SortableLessonRow
+                                        key={lesson._id}
+                                        lesson={lesson}
+                                        onSave={handleSaveLesson}
+                                        onDelete={handleDeleteLesson}
+                                    />
+                                ))}
+                            </div>
+                        </SortableContext>
+                    </DndContext>
+                )}
 
                 <Card variant="soft" className="mt-12">
                     <Card.Header>

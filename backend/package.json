@@ -26,6 +26,7 @@
     "jsonwebtoken": "^9.0.0",
     "mongodb": "^7.5.0",
     "mongoose": "^9.7.4",
+    "mongosh": "^2.10.0",
     "puppeteer": "^25.4.0",
     "swagger-ui-express": "^5.0.1",
     "yamljs": "^0.3.0"
