@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret_key_123';
+process.env.CERT_SERVICE_URL = 'http://localhost:5000/api/v1/certificates';
 process.env.NODE_ENV = 'test';
 
 let mongoServer;
