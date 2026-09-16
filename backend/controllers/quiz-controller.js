@@ -2,6 +2,8 @@ const Quiz = require("../models/Quiz")
 const QuizAttempt = require("../models/QuizAttempt")
 const Course = require("../models/Course")
 const User = require("../models/User")
+const Enrollment = require("../models/Enrollment")
+const { gradeQuiz, QuizGradingError } = require("../services/quiz-grading")
 const asyncHandler = require("express-async-handler")
 const { body, param } = require("express-validator")
 
@@ -44,6 +46,24 @@ const updateQuizValidators = [
     ...quizBodyRules,
 ]
 
+// Student submission: { answers: [{ questionId, selectedIndex }] }
+// selectedIndex may be null (skipped). Matching answers to the quiz's questions
+// is checked by gradeQuiz, which knows the quiz.
+const submitAttemptValidators = [
+    ...quizIdValidator,
+    body("answers").isArray().withMessage("Answers must be a list"),
+    body("answers.*.questionId").isMongoId().withMessage("Invalid question id"),
+    body("answers.*.selectedIndex")
+        .optional({ values: "null" })
+        .isInt({ min: 0, max: 3 }).withMessage("Selected option is not valid")
+        .toInt(),
+]
+
+const attemptParamsValidator = [
+    ...quizIdValidator,
+    param("attemptId").isMongoId().withMessage("Invalid attempt id"),
+]
+
 // --- helpers ---
 
 // Only the instructor who owns the course (or an admin) can manage its quizzes.
@@ -73,6 +93,46 @@ async function findOwnedQuiz(quizId, request, response, { lean = true } = {}) {
     }
     const course = await findOwnedCourse(quiz.courseId, request, response)
     return course ? quiz : null
+}
+
+// Loads a quiz for a student and checks they are enrolled (not suspended) in its course.
+// Returns the quiz, or sends the error response and returns null.
+async function findQuizForStudent(quizId, request, response, { withCorrectAnswers = false } = {}) {
+    const query = Quiz.findById(quizId)
+    if (withCorrectAnswers) query.select("+questions.correctIndex")
+    const quiz = await query.lean()
+    if (!quiz) {
+        response.status(404).json({ message: "Quiz not found" })
+        return null
+    }
+
+    const enrolled = await Enrollment.exists({
+        studentId: request.user.userId,
+        courseId: quiz.courseId,
+        status: { $in: ["active", "completed"] },
+    })
+    if (!enrolled) {
+        response.status(403).json({ message: "You must be enrolled in this course to take its quizzes" })
+        return null
+    }
+    return quiz
+}
+
+// The result + review a student sees after submitting (and when reopening it later)
+function formatAttemptForStudent(attempt, quizTitle) {
+    return {
+        _id: attempt._id,
+        quizId: attempt.quizId,
+        courseId: attempt.courseId,
+        quizTitle,
+        correctCount: attempt.correctCount,
+        totalQuestions: attempt.totalQuestions,
+        scorePercent: attempt.scorePercent,
+        passingScore: attempt.passingScore,
+        passed: attempt.passed,
+        answers: attempt.answers,
+        submittedAt: attempt.createdAt,
+    }
 }
 
 // Keep only the fields we accept, so extra client fields never reach the database
@@ -198,6 +258,70 @@ const deleteQuiz = asyncHandler(async (request, response) => {
     response.json({ message: "Quiz deleted successfully" })
 })
 
+// --- student handlers ---
+
+// GET /api/v1/quizzes/:quizId/take
+// Enrolled student: the questions and options to answer. Correct answers are never sent.
+const getQuizForStudent = asyncHandler(async (request, response) => {
+    const quiz = await findQuizForStudent(request.params.quizId, request, response)
+    if (!quiz) return
+
+    response.json({
+        _id: quiz._id,
+        courseId: quiz.courseId,
+        title: quiz.title,
+        passingScore: quiz.passingScore,
+        totalQuestions: quiz.questions.length,
+        questions: quiz.questions.map(({ _id, text, options }) => ({ _id, text, options })),
+    })
+})
+
+// POST /api/v1/quizzes/:quizId/attempts
+// Enrolled student submits answers. The server grades them and saves the attempt;
+// any score or "passed" sent by the client is ignored. Retakes are allowed.
+const submitQuizAttempt = asyncHandler(async (request, response) => {
+    const quiz = await findQuizForStudent(request.params.quizId, request, response, { withCorrectAnswers: true })
+    if (!quiz) return
+
+    let result
+    try {
+        result = gradeQuiz(quiz, request.body.answers)
+    } catch (error) {
+        if (error instanceof QuizGradingError) {
+            return response.status(400).json({ errors: [{ field: error.field, message: error.message }] })
+        }
+        throw error
+    }
+
+    const attempt = await QuizAttempt.create({
+        quizId: quiz._id,
+        courseId: quiz.courseId,
+        studentId: request.user.userId,
+        ...result,
+    })
+
+    response.status(201).json(formatAttemptForStudent(attempt, quiz.title))
+})
+
+// GET /api/v1/quizzes/:quizId/attempts/:attemptId
+// A student's own attempt: score, pass/fail and each question with the right answer.
+// Someone else's attempt answers 404, so attempt ids can't be probed.
+const getAttemptForStudent = asyncHandler(async (request, response) => {
+    const { quizId, attemptId } = request.params
+
+    const attempt = await QuizAttempt.findOne({
+        _id: attemptId,
+        quizId,
+        studentId: request.user.userId,
+    }).lean()
+    if (!attempt) {
+        return response.status(404).json({ message: "Attempt not found" })
+    }
+
+    const quiz = await Quiz.findById(quizId).select("title").lean()
+    response.json(formatAttemptForStudent(attempt, quiz ? quiz.title : null))
+})
+
 module.exports = {
     createQuiz,
     getQuizzesByCourse,
@@ -205,8 +329,13 @@ module.exports = {
     getLatestAttempts,
     updateQuiz,
     deleteQuiz,
+    getQuizForStudent,
+    submitQuizAttempt,
+    getAttemptForStudent,
     quizIdValidator,
     courseIdParamValidator,
     createQuizValidators,
     updateQuizValidators,
+    submitAttemptValidators,
+    attemptParamsValidator,
 }

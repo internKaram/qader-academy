@@ -150,7 +150,9 @@ function CatalogPage() {
                                                     </Button>
                                                 </>
                                             )}
-                                            <Link to={`/instructor/courses/${course._id}`}>
+                                            {/* Shown to everyone (visitors, students, instructors). /course/:id is the
+                                                public course page; it shows owner tools itself when the owner views it. */}
+                                            <Link to={`/course/${course._id}`}>
                                                 <Button size="sm" variant="outline">View course</Button>
                                             </Link>
                                         </div>

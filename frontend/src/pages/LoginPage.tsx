@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { gsap } from "gsap";
 import { Input, Button, Card } from "../components/ui";
 import { SiteChrome } from "../components/SiteChrome";
@@ -52,6 +52,7 @@ function validateLoginForm(email: string, password: string): FormErrors {
  */
 export function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const pageRef = useRef<HTMLDivElement>(null);
 
   const [email, setEmail] = useState<string>("");
@@ -102,6 +103,14 @@ export function LoginPage() {
       // Store JWT token and user details in localStorage
       localStorage.setItem("token", response.token);
       localStorage.setItem("user", JSON.stringify(response.user));
+
+      // Came from a page that needs login (e.g. Enroll on /course/:id)? Go back there.
+      // Only same-site paths are allowed ("/x", not "//evil.com").
+      const redirect = searchParams.get("redirect");
+      if (redirect && redirect.startsWith("/") && !redirect.startsWith("//")) {
+        navigate(redirect, { replace: true });
+        return;
+      }
 
       // Navigate based on user role
       if (response.user.role === "admin") {

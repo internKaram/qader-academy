@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react"
-import { useParams, Link } from "react-router-dom"
+import { useParams, Link, useLocation, useNavigate } from "react-router-dom"
 import { Badge, Button, Card, Spinner } from "../components/ui"
 import api from "../api/axios"
 import type { CourseWithLessons } from "../types/course"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, CheckCircle2 } from "lucide-react"
 import { Clock, BookOpen, Plus } from "lucide-react"
 import { useAuth } from "../hooks/useAuth"
+import { enrollInCourse, isEnrolledInCourse } from "../services/enrollmentService"
 
 
 function CourseDetailPage() {
@@ -13,9 +14,71 @@ function CourseDetailPage() {
     const [course, setCourse] = useState<CourseWithLessons | null>(null)
     const [loading, setLoading] = useState<boolean>(true)
     const [error, setError] = useState<string | null>(null)
-    const { user } = useAuth()
+    const { user, isLoading: authLoading } = useAuth()
+    const navigate = useNavigate()
+    const location = useLocation()
 
-    
+    // Enrollment state (only used for student accounts)
+    const [isEnrolled, setIsEnrolled] = useState<boolean>(false)
+    const [checkingEnrollment, setCheckingEnrollment] = useState<boolean>(true)
+    const [enrolling, setEnrolling] = useState<boolean>(false)
+    const [enrollError, setEnrollError] = useState<string | null>(null)
+
+    // When a student opens the page, check whether they are already enrolled
+    useEffect(() => {
+        if (authLoading) return
+        if (!courseId || user?.role !== "student") {
+            setCheckingEnrollment(false)
+            return
+        }
+        let cancelled = false
+        const checkEnrollment = async () => {
+            try {
+                const enrolled = await isEnrolledInCourse(courseId)
+                if (!cancelled) setIsEnrolled(enrolled)
+            } catch {
+                // If the check fails, still show the Enroll button; enrolling handles duplicates
+            } finally {
+                if (!cancelled) setCheckingEnrollment(false)
+            }
+        }
+        checkEnrollment()
+        return () => {
+            cancelled = true
+        }
+    }, [courseId, user, authLoading])
+
+    async function handleEnroll() {
+        if (!courseId) return
+
+        // Logged out: send them to login, then bring them back to this course
+        if (!user) {
+            navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`)
+            return
+        }
+
+        setEnrolling(true)
+        setEnrollError(null)
+        try {
+            await enrollInCourse(courseId)
+            setIsEnrolled(true)
+        } catch {
+            // The API answers 400 if they were already enrolled (e.g. from another tab).
+            // Re-check instead of showing an error in that case.
+            try {
+                if (await isEnrolledInCourse(courseId)) {
+                    setIsEnrolled(true)
+                    return
+                }
+            } catch {
+                // fall through to the error message
+            }
+            setEnrollError("Could not enroll you in this course. Please try again.")
+        } finally {
+            setEnrolling(false)
+        }
+    }
+
     useEffect(() => {
         if (!courseId) return
         const fetchCourse = async () => {
@@ -98,6 +161,15 @@ function CourseDetailPage() {
                                 </Link>
                             )}
                         </div>
+                        {(course.lessons ?? []).length === 0 && (
+                            <div className="mt-4 rounded-card border border-dashed border-line-strong bg-canvas p-8 text-center">
+                                <BookOpen className="mx-auto size-6 text-ink-muted" />
+                                <p className="mt-3 font-bold text-ink">There are no lessons in this course yet.</p>
+                                <p className="mt-1 text-sm text-ink-soft">
+                                    {isOwner ? "Use the + button above to add the first lesson." : "Check back soon, new lessons will appear here."}
+                                </p>
+                            </div>
+                        )}
                         <ul className="mt-4 space-y-3">
                                 {(course.lessons ?? []).map((lesson) => (
                                 <li
@@ -134,7 +206,40 @@ function CourseDetailPage() {
                             </p>
                         </Card.Body>
                         <Card.Footer>
-                            <Button fullWidth>Enroll (coming soon)</Button>
+                            <div className="flex w-full flex-col gap-2">
+                            {authLoading || (user?.role === "student" && checkingEnrollment) ? (
+                                <Button fullWidth loading>
+                                    Enroll now
+                                </Button>
+                            ) : !user ? (
+                                <>
+                                    <Button fullWidth onClick={handleEnroll}>
+                                        Enroll now
+                                    </Button>
+                                    <p className="text-center text-xs text-ink-muted">You'll be asked to log in first.</p>
+                                </>
+                            ) : isOwner ? (
+                                <p className="text-center text-sm font-semibold text-ink-soft">You are the instructor of this course.</p>
+                            ) : user.role !== "student" ? (
+                                <p className="text-center text-sm font-semibold text-ink-soft">Only student accounts can enroll.</p>
+                            ) : isEnrolled ? (
+                                <div className="flex items-center justify-center gap-2 rounded-control bg-success-light px-4 py-3 text-sm font-bold text-success-dark">
+                                    <CheckCircle2 className="size-4" />
+                                    You're enrolled in this course
+                                </div>
+                            ) : (
+                                <>
+                                    <Button fullWidth loading={enrolling} onClick={handleEnroll}>
+                                        Enroll now
+                                    </Button>
+                                    {enrollError && (
+                                        <p role="alert" className="text-center text-sm font-semibold text-danger">
+                                            {enrollError}
+                                        </p>
+                                    )}
+                                </>
+                            )}
+                            </div>
                         </Card.Footer>
                     </Card>
                 </div>

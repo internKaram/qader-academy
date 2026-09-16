@@ -17,7 +17,7 @@ tags:
   - name: Lessons
     description: Lesson management within a course
   - name: Quizzes
-    description: Instructor quiz management and student results (a course can have many quizzes)
+    description: Instructors manage quizzes and see results; enrolled students take quizzes and review their attempts (a course can have many quizzes)
 
 security:
   - bearerAuth: []
@@ -458,6 +458,87 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+    post:
+      tags: [Quizzes]
+      summary: Submit a quiz attempt (student)
+      description: >
+        Requires student role and an active or completed enrollment in the quiz's course.
+        The server grades the answers (1 point per question, skipped questions count as wrong)
+        and saves the attempt. Any score or pass result sent by the client is ignored.
+        Retakes are allowed; every attempt is kept. Returns the result with the correct answers for review.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuizSubmitInput"
+      responses:
+        "201":
+          description: Graded and saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentQuizAttempt"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /quizzes/{quizId}/take:
+    parameters:
+      - $ref: "#/components/parameters/QuizId"
+    get:
+      tags: [Quizzes]
+      summary: Get a quiz to take (student)
+      description: Requires student role and an active or completed enrollment in the quiz's course. Correct answers are never included.
+      responses:
+        "200":
+          description: The quiz questions and options
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentQuiz"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /quizzes/{quizId}/attempts/{attemptId}:
+    parameters:
+      - $ref: "#/components/parameters/QuizId"
+      - name: attemptId
+        in: path
+        required: true
+        description: MongoDB ObjectId of the attempt
+        schema:
+          type: string
+    get:
+      tags: [Quizzes]
+      summary: Get one of your quiz attempts with the review (student)
+      description: Requires student role. Only the student who made the attempt can read it; anyone else gets 404.
+      responses:
+        "200":
+          description: Score, pass result and every question with the correct answer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentQuizAttempt"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
 components:
   securitySchemes:
@@ -806,6 +887,96 @@ components:
           type: integer
         isCorrect:
           type: boolean
+
+    StudentQuiz:
+      type: object
+      description: A quiz as a student sees it before answering (no correct answers).
+      properties:
+        _id:
+          type: string
+        courseId:
+          type: string
+        title:
+          type: string
+        passingScore:
+          type: integer
+        totalQuestions:
+          type: integer
+        questions:
+          type: array
+          items:
+            type: object
+            properties:
+              _id:
+                type: string
+              text:
+                type: string
+              options:
+                type: array
+                minItems: 4
+                maxItems: 4
+                items:
+                  type: string
+
+    QuizSubmitInput:
+      type: object
+      required: [answers]
+      properties:
+        answers:
+          type: array
+          description: One entry per answered question, in any order. Questions left out count as skipped. Each question may appear only once.
+          items:
+            type: object
+            required: [questionId]
+            properties:
+              questionId:
+                type: string
+              selectedIndex:
+                type: integer
+                minimum: 0
+                maximum: 3
+                nullable: true
+                description: The chosen option (null = skipped)
+      example:
+        answers:
+          - questionId: "665f1a2b3c4d5e6f7a8b9c10"
+            selectedIndex: 1
+          - questionId: "665f1a2b3c4d5e6f7a8b9c11"
+            selectedIndex: null
+
+    StudentQuizAttempt:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: Id of the attempt
+        quizId:
+          type: string
+        courseId:
+          type: string
+        quizTitle:
+          type: string
+          nullable: true
+        correctCount:
+          type: integer
+        totalQuestions:
+          type: integer
+        scorePercent:
+          type: number
+          description: Rounded to 2 decimals (2 of 3 = 66.67)
+        passingScore:
+          type: integer
+        passed:
+          type: boolean
+          description: correctCount / totalQuestions >= passingScore / 100 (exact, not the rounded percent)
+        submittedAt:
+          type: string
+          format: date-time
+        answers:
+          type: array
+          description: Every question in quiz order, with the student's pick and the correct answer
+          items:
+            $ref: "#/components/schemas/QuizAttemptAnswer"
 
     LatestQuizAttempt:
       type: object

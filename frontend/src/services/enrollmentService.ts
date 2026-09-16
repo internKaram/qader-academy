@@ -1,4 +1,5 @@
 import axios from 'axios';
+import api from '../api/axios';
 
 // FIX: was missing /v1 — server.js mounts routes at /api/v1/enrollments,
 // so every call was 404ing against /api/enrollments.
@@ -51,4 +52,34 @@ export const enrollStudent = async (
     console.error('Error enrolling student:', error);
     throw error;
   }
+};
+
+// ─── Logged-in student calls ────────────────────────────────────────────────
+// These use the shared `api` instance, which attaches the JWT. The backend
+// reads the student from the token, so no studentId is sent.
+
+// The course id of an enrollment, whether or not courseId was populated.
+// A populated course can be null if the course was deleted.
+export const getEnrollmentCourseId = (enrollment: Enrollment): string | null => {
+  const course = enrollment.courseId as string | Course | null;
+  if (!course) return null;
+  return typeof course === 'string' ? course : course._id;
+};
+
+// GET /api/v1/enrollments for the logged-in student
+export const getMyEnrollments = async (): Promise<Enrollment[]> => {
+  const { data } = await api.get<{ count: number; enrollments: Enrollment[] }>('/enrollments');
+  return data.enrollments;
+};
+
+// Whether the logged-in student is enrolled in this course
+export const isEnrolledInCourse = async (courseId: string): Promise<boolean> => {
+  const enrollments = await getMyEnrollments();
+  return enrollments.some((enrollment) => getEnrollmentCourseId(enrollment) === courseId);
+};
+
+// POST /api/v1/enrollments for the logged-in student
+export const enrollInCourse = async (courseId: string): Promise<Enrollment> => {
+  const { data } = await api.post<{ message: string; enrollment: Enrollment }>('/enrollments', { courseId });
+  return data.enrollment;
 };
