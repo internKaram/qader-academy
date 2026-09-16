@@ -30,6 +30,8 @@ import { InstructorQuizBuilderPage } from "./pages/instructor/InstructorQuizBuil
 import AdminDashboard from "./pages/adminDashboard"
 import { ProtectedRoute } from "./components/ProtectedRoute"
 import LessonEditorPage from "./pages/LessonEditorPage"
+import QuizBuilderPage from "./pages/QuizBuilderPage"
+import CourseQuizzesPage from "./pages/CourseQuizzesPage"
 
 function HashScroll() {
   const { hash } = useLocation()
@@ -122,6 +124,18 @@ export default function App() {
           <Route
             path="/instructor/courses/:courseId/lessons"
             element={<LessonEditorPage />}
+          />
+          <Route
+            path="/instructor/courses/:courseId/quizzes"
+            element={<CourseQuizzesPage />}
+          />
+          <Route
+            path="/instructor/courses/:courseId/quizzes/new"
+            element={<QuizBuilderPage />}
+          />
+          <Route
+            path="/instructor/courses/:courseId/quizzes/:quizId/edit"
+            element={<QuizBuilderPage />}
           />
         </Route>
 

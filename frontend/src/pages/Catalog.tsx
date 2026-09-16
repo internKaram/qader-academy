@@ -5,7 +5,7 @@ import { Badge, Button, Card, Spinner } from "../components/ui"
 import api from "../api/axios"
 import { useAuth } from "../hooks/useAuth"
 import type { Course } from "../types/course"
-import { Pen, Trash2 } from "lucide-react"
+import { ClipboardList, ListChecks, Pen, Trash2 } from "lucide-react"
 import { Plus } from 'lucide-react';
 function CatalogPage() {
     const [courses, setCourses] = useState<Course[]>([])
@@ -135,6 +135,11 @@ function CatalogPage() {
                                                             <Plus className="size-4" />
                                                         </Button>
                                                     </Link>
+                                                    <Link to={`/instructor/courses/${course._id}/quizzes/new`}>
+                                                        <Button size="sm" variant="outline" title="Create quiz" aria-label={`Create quiz for ${course.title}`}>
+                                                            <ListChecks className="size-4" />
+                                                        </Button>
+                                                    </Link>
                                                     <Button
                                                         size="sm"
                                                         variant="secondary"
@@ -149,6 +154,13 @@ function CatalogPage() {
                                                 <Button size="sm" variant="outline">View course</Button>
                                             </Link>
                                         </div>
+                                        {isOwner && (
+                                            <Link to={`/instructor/courses/${course._id}/quizzes`} className="w-full">
+                                                <Button size="sm" variant="outline" fullWidth leadingIcon={<ClipboardList className="size-4" />}>
+                                                    Show quizzes for this course
+                                                </Button>
+                                            </Link>
+                                        )}
                                     </Card.Footer>
                                 </Card>
                             )

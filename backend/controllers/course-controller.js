@@ -1,5 +1,7 @@
 const Course = require("../models/Course")
 const Lesson = require("../models/Lesson")
+const Quiz = require("../models/Quiz")
+const QuizAttempt = require("../models/QuizAttempt")
 const asyncHandler = require("express-async-handler")
 const mongoose = require('mongoose');
 const { body, param, validationResult } = require("express-validator")
@@ -145,6 +147,8 @@ const deleteCourse = asyncHandler(async (request, response) => {
     }
 
     await Lesson.deleteMany({ courseId }) // removes lessons belonging to this course
+    await Quiz.deleteMany({ courseId }) // removes the course quizzes so they are not left orphaned
+    await QuizAttempt.deleteMany({ courseId }) // and every student attempt on them
     await Course.findByIdAndDelete(courseId)
 
     response.json({ message: "Course and its lessons deleted successfully" })

@@ -26,12 +26,12 @@ const questionSchema = new mongoose.Schema({
 })
 
 const quizSchema = new mongoose.Schema({
-    // One quiz per course
+    // A course can have many quizzes
     courseId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Course",
         required: true,
-        unique: true
+        index: true
     },
     title: {
         type: String,

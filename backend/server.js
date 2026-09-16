@@ -14,6 +14,7 @@ const authRoutes = require('./routes/auth-routes');
 const enrollmentRoutes = require('./routes/enrollmentRoutes');
 const progressRoutes = require('./routes/progressRoutes');
 const adminRoutes = require('./routes/admin-routes');
+const quizRoutes = require('./routes/quiz-routes');
 
 const app = express();
 
@@ -57,6 +58,7 @@ app.use('/api/v1/courses', lessonRouter);
 
 app.use('/api/v1/enrollments', enrollmentRoutes);
 app.use('/api/v1/progress', progressRoutes);
+app.use('/api/v1/quizzes', quizRoutes);
 
 app.use('/api/v1/admin', adminRoutes);
 

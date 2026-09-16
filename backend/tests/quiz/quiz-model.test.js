@@ -73,10 +73,12 @@ describe('Quiz model', () => {
     await expect(Quiz.create(makeQuiz({ passingScore: -1 }))).rejects.toThrow(/passingScore/);
   });
 
-  it('allows only one quiz per course', async () => {
+  it('allows many quizzes in the same course', async () => {
     const courseId = new mongoose.Types.ObjectId();
     await Quiz.create(makeQuiz({ courseId }));
-    await expect(Quiz.create(makeQuiz({ courseId }))).rejects.toThrow(/duplicate key/);
+    await Quiz.create(makeQuiz({ courseId, title: 'Second quiz' }));
+
+    expect(await Quiz.countDocuments({ courseId })).toBe(2);
   });
 
   it('hides correctIndex from queries by default', async () => {

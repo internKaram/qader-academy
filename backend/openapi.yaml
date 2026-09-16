@@ -16,6 +16,8 @@ tags:
     description: Course creation, editing, and browsing
   - name: Lessons
     description: Lesson management within a course
+  - name: Quizzes
+    description: Instructor quiz management and student results (a course can have many quizzes)
 
 security:
   - bearerAuth: []
@@ -146,7 +148,7 @@ paths:
     delete:
       tags: [Courses]
       summary: Delete a course
-      description: Requires instructor or admin role. Only the owning instructor may delete. Cascades — deletes all lessons belonging to the course.
+      description: Requires instructor or admin role. Only the owning instructor may delete. Cascades — deletes all lessons, quizzes and quiz attempts belonging to the course.
       responses:
         "200":
           description: Course and its lessons deleted
@@ -297,6 +299,166 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  /quizzes:
+    post:
+      tags: [Quizzes]
+      summary: Create a new quiz in a course
+      description: Requires instructor or admin role. Only the owning instructor (or an admin) may create it. Every call creates a separate quiz linked to the course.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuizCreateInput"
+            examples:
+              valid:
+                value:
+                  courseId: "665f1a2b3c4d5e6f7a8b9c0d"
+                  title: "Computer Architecture Quiz"
+                  passingScore: 70
+                  questions:
+                    - text: "What does the CPU fetch first?"
+                      options: ["Data", "The next instruction", "A register", "The cache"]
+                      correctIndex: 1
+      responses:
+        "201":
+          description: Quiz created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quiz"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /quizzes/course/{courseId}:
+    parameters:
+      - $ref: "#/components/parameters/CourseId"
+    get:
+      tags: [Quizzes]
+      summary: List a course's quizzes (instructor view, includes correct answers)
+      description: Requires instructor or admin role. Only the owning instructor (or an admin) may read them. Newest quiz first.
+      responses:
+        "200":
+          description: Every quiz in the course (empty array when there are none)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - $ref: "#/components/schemas/Quiz"
+                    - type: object
+                      properties:
+                        studentCount:
+                          type: integer
+                          description: Number of different students who have attempted the quiz
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /quizzes/{quizId}:
+    parameters:
+      - $ref: "#/components/parameters/QuizId"
+    get:
+      tags: [Quizzes]
+      summary: Get one quiz (instructor view, includes correct answers)
+      description: Requires instructor or admin role. Only the owning instructor (or an admin) may read it.
+      responses:
+        "200":
+          description: The quiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quiz"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Quizzes]
+      summary: Update a quiz
+      description: Requires instructor or admin role. Replaces the title, passing score and the full question list.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuizUpdateInput"
+      responses:
+        "200":
+          description: Quiz updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quiz"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Quizzes]
+      summary: Delete a quiz
+      description: Requires instructor or admin role. Only the owning instructor (or an admin) may delete it. Also deletes every student attempt on the quiz.
+      responses:
+        "200":
+          description: Quiz deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /quizzes/{quizId}/attempts:
+    parameters:
+      - $ref: "#/components/parameters/QuizId"
+    get:
+      tags: [Quizzes]
+      summary: Latest attempt of each student on a quiz
+      description: Requires instructor or admin role. Only the owning instructor (or an admin) may read it. One row per student, newest submission first.
+      responses:
+        "200":
+          description: Each student's latest attempt (empty array when nobody has taken the quiz)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LatestQuizAttempt"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
 components:
   securitySchemes:
     bearerAuth:
@@ -324,6 +486,14 @@ components:
       schema:
         type: string
         example: "665f1a2b3c4d5e6f7a8b9c0e"
+    QuizId:
+      name: quizId
+      in: path
+      required: true
+      description: MongoDB ObjectId of the quiz
+      schema:
+        type: string
+        example: "665f1a2b3c4d5e6f7a8b9c0f"
 
   responses:
     ValidationError:
@@ -536,3 +706,140 @@ components:
               orderIndex:
                 type: integer
                 minimum: 0
+
+    QuizQuestion:
+      type: object
+      required: [text, options, correctIndex]
+      properties:
+        _id:
+          type: string
+          readOnly: true
+        text:
+          type: string
+          example: "What does the CPU fetch first?"
+        options:
+          type: array
+          minItems: 4
+          maxItems: 4
+          items:
+            type: string
+          example: ["Data", "The next instruction", "A register", "The cache"]
+        correctIndex:
+          type: integer
+          minimum: 0
+          maximum: 3
+          description: Index of the correct option. Never returned to students.
+          example: 1
+
+    Quiz:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "665f1a2b3c4d5e6f7a8b9c0f"
+        courseId:
+          type: string
+          example: "665f1a2b3c4d5e6f7a8b9c0d"
+        title:
+          type: string
+          example: "Computer Architecture Quiz"
+        passingScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Percentage of correct answers needed to pass
+          example: 70
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuizQuestion"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    QuizUpdateInput:
+      type: object
+      required: [title, questions]
+      properties:
+        title:
+          type: string
+        passingScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 70
+        questions:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/QuizQuestion"
+
+    QuizCreateInput:
+      allOf:
+        - type: object
+          required: [courseId]
+          properties:
+            courseId:
+              type: string
+        - $ref: "#/components/schemas/QuizUpdateInput"
+
+    QuizAttemptAnswer:
+      type: object
+      description: A copy of the question as it was when the student submitted, plus their answer.
+      properties:
+        questionId:
+          type: string
+        questionText:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+        selectedIndex:
+          type: integer
+          nullable: true
+          description: The option the student picked (null if skipped)
+        correctIndex:
+          type: integer
+        isCorrect:
+          type: boolean
+
+    LatestQuizAttempt:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: Id of the attempt
+        student:
+          type: object
+          properties:
+            _id:
+              type: string
+            name:
+              type: string
+            email:
+              type: string
+        attemptCount:
+          type: integer
+          description: How many times this student has taken the quiz
+        correctCount:
+          type: integer
+        totalQuestions:
+          type: integer
+        scorePercent:
+          type: number
+        passingScore:
+          type: integer
+          description: The quiz's passing score when the attempt was made
+        passed:
+          type: boolean
+        submittedAt:
+          type: string
+          format: date-time
+        answers:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuizAttemptAnswer"
