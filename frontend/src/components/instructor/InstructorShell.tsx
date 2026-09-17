@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { BookOpen, ChevronDown, Eye, LayoutDashboard, LogOut, Menu, Plus, Repeat2, X } from 'lucide-react';
+import { BookOpen, ChevronDown, Eye, LayoutDashboard, Library, LogOut, Menu, Plus, Repeat2, X } from 'lucide-react';
 import { instructorProfile } from '../../data/instructorDashboard';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui';
@@ -25,6 +25,8 @@ const navItems = [
       pathname === instructorCoursesPath || (pathname.startsWith(`${instructorCoursesPath}/`) && pathname !== `${instructorCoursesPath}/new`),
   },
   { label: 'New Course', to: `${instructorCoursesPath}/new`, icon: Plus, isActive: (pathname: string) => pathname === `${instructorCoursesPath}/new` },
+  // The catalog is where instructors edit their real courses, lessons and quizzes
+  { label: 'Catalog', to: '/catalog', icon: Library, isActive: (pathname: string) => pathname === '/catalog' },
 ] as const;
 
 function navClassName(isActive: boolean) {

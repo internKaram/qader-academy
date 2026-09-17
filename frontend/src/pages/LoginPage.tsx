@@ -118,7 +118,8 @@ export function LoginPage() {
       } else if (response.user.role === "instructor") {
         navigate("/instructor");
       } else {
-        navigate("/dashboard");
+        // Students start on the catalog to find courses; the header's Dashboard button leads to their dashboard
+        navigate("/catalog");
       }
     } catch (err: unknown) {
       if (isAxiosError(err)) {

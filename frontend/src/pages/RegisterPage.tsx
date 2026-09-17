@@ -135,7 +135,8 @@ export function RegisterPage() {
       } else if (response.user.role === "instructor") {
         navigate("/instructor");
       } else {
-        navigate("/dashboard");
+        // New students have no courses yet, so start on the catalog to find one
+        navigate("/catalog");
       }
     } catch (err: unknown) {
       if (isAxiosError(err)) {

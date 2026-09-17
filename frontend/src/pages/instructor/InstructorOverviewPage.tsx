@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, CheckCircle2, FilePenLine, Users } from 'lucide-react';
+import { BookOpen, CheckCircle2, FilePenLine, Library, Users } from 'lucide-react';
 import { InstructorShell } from '../../components/instructor/InstructorShell';
 import { Badge, Button, Card, Table, type TableColumn } from '../../components/ui';
 import {
@@ -357,9 +357,14 @@ export function InstructorOverviewPage() {
       title={`Welcome back, ${instructorProfile.name.split(' ')[0]}.`}
       description="Manage your course drafts, published learning paths, lessons, quizzes, and course-scoped learner progress from one focused workspace."
       action={
-        <Link to="/instructor/courses/new">
-          <Button leadingIcon={<FilePenLine className="size-4" />}>Create course</Button>
-        </Link>
+        <>
+          <Link to="/catalog">
+            <Button variant="outline" leadingIcon={<Library className="size-4" />}>Browse catalog</Button>
+          </Link>
+          <Link to="/instructor/courses/new">
+            <Button leadingIcon={<FilePenLine className="size-4" />}>Create course</Button>
+          </Link>
+        </>
       }
     >
       <CoursePurchasesChart />

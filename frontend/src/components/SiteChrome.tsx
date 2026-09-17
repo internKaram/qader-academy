@@ -1,5 +1,6 @@
 import { forwardRef, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { Library } from 'lucide-react';
 import { NavSignInButton } from './NavSignInButton';
 
 function sectionHref(basePath: string, id: string) {
@@ -39,8 +40,8 @@ export const SiteChrome = forwardRef<HTMLDivElement, SiteChromeProps>(function S
 export function SiteHeader({ sectionBasePath = '/' }: SiteHeaderProps) {
   return (
     <header className="fixed inset-x-0 top-0 z-40 bg-white/90 shadow-[0_10px_30px_rgb(18_24_38_/_0.06)] backdrop-blur-xl">
-      <div className="page-container flex min-h-18 items-center justify-between gap-6">
-        <Link className="font-display text-xl font-black tracking-normal text-ink" to="/" aria-label="QaderAcademy home">
+      <div className="page-container flex min-h-18 items-center justify-between gap-3 md:gap-6">
+        <Link className="font-display text-lg font-black tracking-normal text-ink sm:text-xl" to="/" aria-label="QaderAcademy home">
           QaderAcademy
         </Link>
         <nav className="hidden items-center gap-6 text-sm font-bold text-ink-soft md:flex" aria-label="Primary navigation">
@@ -48,13 +49,25 @@ export function SiteHeader({ sectionBasePath = '/' }: SiteHeaderProps) {
             About
           </Link>
           <Link className="transition hover:text-brand-700" to="/catalog">
-            Courses
+            Catalog
           </Link>
           <Link className="transition hover:text-brand-700" to={sectionHref(sectionBasePath, 'contact')}>
             Contact
           </Link>
         </nav>
-        <NavSignInButton />
+        <div className="flex items-center gap-1.5">
+          {/* The nav above is hidden on small screens, so keep the catalog reachable there.
+              Icon only, so it fits next to Dashboard / Sign Out; the padding enlarges the tap area. */}
+          <Link
+            aria-label="Catalog"
+            className="-m-1.5 rounded-control p-1.5 text-ink-soft transition hover:text-brand-700 md:hidden"
+            title="Catalog"
+            to="/catalog"
+          >
+            <Library className="size-5" />
+          </Link>
+          <NavSignInButton />
+        </div>
       </div>
     </header>
   );
