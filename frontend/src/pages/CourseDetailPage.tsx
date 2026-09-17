@@ -7,6 +7,7 @@ import { ArrowLeft, CheckCircle2 } from "lucide-react"
 import { Clock, BookOpen, Plus } from "lucide-react"
 import { useAuth } from "../hooks/useAuth"
 import { enrollInCourse, isEnrolledInCourse } from "../services/enrollmentService"
+import { StudentCourseQuizzes } from "../components/quiz/StudentCourseQuizzes"
 
 
 function CourseDetailPage() {
@@ -192,6 +193,10 @@ function CourseDetailPage() {
                                 </li>
                             ))}
                         </ul>
+
+                        {user?.role === "student" && isEnrolled && courseId && (
+                            <StudentCourseQuizzes courseId={courseId} />
+                        )}
                     </div>
 
                     <Card variant="elevated" className="h-fit">
@@ -219,7 +224,12 @@ function CourseDetailPage() {
                                     <p className="text-center text-xs text-ink-muted">You'll be asked to log in first.</p>
                                 </>
                             ) : isOwner ? (
-                                <p className="text-center text-sm font-semibold text-ink-soft">You are the instructor of this course.</p>
+                                <>
+                                    <p className="text-center text-sm font-semibold text-ink-soft">You are the instructor of this course.</p>
+                                    <Link to={`/instructor/courses/${course._id}/quizzes?tab=students`}>
+                                        <Button fullWidth variant="outline">Students & quiz grades</Button>
+                                    </Link>
+                                </>
                             ) : user.role !== "student" ? (
                                 <p className="text-center text-sm font-semibold text-ink-soft">Only student accounts can enroll.</p>
                             ) : isEnrolled ? (

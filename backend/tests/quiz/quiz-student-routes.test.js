@@ -362,3 +362,171 @@ describe('GET /api/v1/quizzes/:quizId/attempts/:attemptId', () => {
     expect((await review(submitted.body._id, ownerToken())).status).toBe(403);
   });
 });
+
+describe('GET /api/v1/quizzes/course/:courseId/available', () => {
+  const available = (token = studentToken, courseId = course._id) =>
+    request(app).get(`/api/v1/quizzes/course/${courseId}/available`).set('Authorization', `Bearer ${token}`);
+
+  it("lists the course's quizzes oldest first, without questions, and no attempt yet", async () => {
+    const later = await Quiz.create({
+      courseId: course._id,
+      title: 'Memory',
+      passingScore: 50,
+      questions: [{ text: 'Q', options: ['A', 'B', 'C', 'D'], correctIndex: 0 }],
+      createdAt: new Date(Date.now() + 60000),
+    });
+
+    const res = await available();
+
+    expect(res.status).toBe(200);
+    expect(res.body.map((q) => q.title)).toEqual(['CPU Basics', 'Memory']);
+    expect(res.body[0]).toEqual({
+      _id: quiz._id.toString(),
+      courseId: course._id.toString(),
+      title: 'CPU Basics',
+      passingScore: 75,
+      totalQuestions: 4,
+      latestAttempt: null,
+    });
+    expect(res.body[1]._id).toBe(later._id.toString());
+    expect(JSON.stringify(res.body)).not.toContain('correctIndex');
+    expect(JSON.stringify(res.body)).not.toContain('Question 1');
+  });
+
+  it("shows the student's own latest attempt and attempt count", async () => {
+    await submit(answersFor([0, 0, 0, 0]));
+    const newest = await submit(answersFor(CORRECT));
+    // Another student's better or worse attempt must not leak in
+    const other = await makeStudent('other');
+    await Enrollment.create({ studentId: other.user._id, courseId: course._id });
+    await submit(answersFor([1, 0, 0, 0]), other.token);
+
+    const res = await available();
+
+    expect(res.body[0].latestAttempt).toEqual({
+      attemptId: newest.body._id,
+      correctCount: 4,
+      totalQuestions: 4,
+      scorePercent: 100,
+      passingScore: 75,
+      passed: true,
+      submittedAt: newest.body.submittedAt,
+      attemptCount: 2,
+    });
+  });
+
+  it('returns an empty list when the course has no quizzes', async () => {
+    await Quiz.deleteMany({});
+    const res = await available();
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it('blocks students who are not enrolled or suspended', async () => {
+    const other = await makeStudent('outsider');
+    expect((await available(other.token)).status).toBe(403);
+
+    await Enrollment.updateOne({ studentId: student._id }, { status: 'suspended' });
+    expect((await available()).status).toBe(403);
+  });
+
+  it('is for students only, needs login, and checks the id', async () => {
+    expect((await available(ownerToken())).status).toBe(403);
+    expect((await request(app).get(`/api/v1/quizzes/course/${course._id}/available`)).status).toBe(401);
+    expect((await available(studentToken, 'bad-id')).status).toBe(400);
+  });
+});
+
+describe('GET /api/v1/quizzes/course/:courseId/students', () => {
+  const students = (token = ownerToken(), courseId = course._id) =>
+    request(app).get(`/api/v1/quizzes/course/${courseId}/students`).set('Authorization', `Bearer ${token}`);
+
+  it('lists every enrolled student, including ones who have not taken a quiz', async () => {
+    const res = await students();
+
+    expect(res.status).toBe(200);
+    expect(res.body.quizzes).toEqual([
+      { _id: quiz._id.toString(), title: 'CPU Basics', passingScore: 75, totalQuestions: 4 },
+    ]);
+    expect(res.body.students).toHaveLength(1);
+    expect(res.body.students[0]).toMatchObject({
+      _id: student._id.toString(),
+      name: 'student',
+      email: 'student@test.com',
+      status: 'active',
+      grades: [],
+    });
+    expect(res.body.students[0].enrolledAt).toBeDefined();
+    expect(JSON.stringify(res.body)).not.toContain('passwordHash');
+  });
+
+  it("shows each student's latest grade on each quiz", async () => {
+    const quiz2 = await Quiz.create({
+      courseId: course._id,
+      title: 'Memory',
+      passingScore: 50,
+      questions: [{ text: 'Q', options: ['A', 'B', 'C', 'D'], correctIndex: 2 }],
+      createdAt: new Date(Date.now() + 60000),
+    });
+
+    await submit(answersFor(CORRECT)); // 100%, then a worse retake
+    const latest = await submit(answersFor([1, 0, 0, 0])); // 50%, not passed
+    const bob = await makeStudent('bob');
+    await Enrollment.create({ studentId: bob.user._id, courseId: course._id, enrolledAt: new Date(Date.now() + 1000) });
+    await submit([{ questionId: quiz2.questions[0]._id.toString(), selectedIndex: 2 }], bob.token, quiz2._id);
+
+    const res = await students();
+
+    expect(res.body.quizzes.map((q) => q.title)).toEqual(['CPU Basics', 'Memory']);
+    // Newest enrollment first
+    expect(res.body.students.map((s) => s.name)).toEqual(['bob', 'student']);
+
+    const studentRow = res.body.students[1];
+    expect(studentRow.grades).toEqual([{
+      quizId: quiz._id.toString(),
+      attemptId: latest.body._id,
+      correctCount: 2,
+      totalQuestions: 4,
+      scorePercent: 50,
+      passingScore: 75,
+      passed: false,
+      submittedAt: latest.body.submittedAt,
+      attemptCount: 2,
+    }]);
+
+    const bobRow = res.body.students[0];
+    expect(bobRow.grades).toHaveLength(1);
+    expect(bobRow.grades[0]).toMatchObject({ quizId: quiz2._id.toString(), scorePercent: 100, passed: true, attemptCount: 1 });
+  });
+
+  it('does not list students of other courses, deleted accounts or duplicates', async () => {
+    const elsewhere = await makeStudent('elsewhere');
+    await Enrollment.create({ studentId: elsewhere.user._id, courseId: new mongoose.Types.ObjectId() });
+    await Enrollment.create({ studentId: new mongoose.Types.ObjectId(), courseId: course._id }); // deleted user
+    await Enrollment.create({ studentId: student._id, courseId: course._id }); // duplicate row
+
+    const res = await students();
+    expect(res.body.students.map((s) => s.name)).toEqual(['student']);
+  });
+
+  it('shows suspended students with their status', async () => {
+    await Enrollment.updateOne({ studentId: student._id }, { status: 'suspended' });
+    const res = await students();
+    expect(res.body.students[0].status).toBe('suspended');
+  });
+
+  it('lets an admin see it', async () => {
+    expect((await students(tokenFor(new mongoose.Types.ObjectId(), 'admin'))).status).toBe(200);
+  });
+
+  it("blocks other instructors, students and visitors", async () => {
+    expect((await students(tokenFor(new mongoose.Types.ObjectId(), 'instructor'))).status).toBe(403);
+    expect((await students(studentToken)).status).toBe(403);
+    expect((await request(app).get(`/api/v1/quizzes/course/${course._id}/students`)).status).toBe(401);
+  });
+
+  it('returns 404 for a missing course and 400 for a bad id', async () => {
+    expect((await students(ownerToken(), new mongoose.Types.ObjectId())).status).toBe(404);
+    expect((await students(ownerToken(), 'bad-id')).status).toBe(400);
+  });
+});

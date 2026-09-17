@@ -32,6 +32,8 @@ import { ProtectedRoute } from "./components/ProtectedRoute"
 import LessonEditorPage from "./pages/LessonEditorPage"
 import QuizBuilderPage from "./pages/QuizBuilderPage"
 import CourseQuizzesPage from "./pages/CourseQuizzesPage"
+import StudentQuizPage from "./pages/StudentQuizPage"
+import QuizAttemptPage from "./pages/QuizAttemptPage"
 
 function HashScroll() {
   const { hash } = useLocation()
@@ -85,6 +87,22 @@ export default function App() {
 
         {/* Student Dashboard */}
         <Route path="/dashboard" element={<Dashboard />} />
+
+        {/* Student quizzes (the API also checks the student is enrolled in the course) */}
+        <Route element={<ProtectedRoute allowedRoles={["student"]} />}>
+          <Route
+            path="/course/:courseId/quizzes/:quizId"
+            element={<StudentQuizPage />}
+          />
+          <Route
+            path="/course/:courseId/quizzes/:quizId/attempts/:attemptId"
+            element={<QuizAttemptPage mode="result" />}
+          />
+          <Route
+            path="/course/:courseId/quizzes/:quizId/attempts/:attemptId/review"
+            element={<QuizAttemptPage mode="review" />}
+          />
+        </Route>
 
         {/* Protected Instructor workspace routes */}
         <Route element={<ProtectedRoute allowedRoles={["instructor"]} />}>

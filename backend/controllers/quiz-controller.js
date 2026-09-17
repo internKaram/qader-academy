@@ -1,3 +1,4 @@
+const mongoose = require("mongoose")
 const Quiz = require("../models/Quiz")
 const QuizAttempt = require("../models/QuizAttempt")
 const Course = require("../models/Course")
@@ -95,6 +96,13 @@ async function findOwnedQuiz(quizId, request, response, { lean = true } = {}) {
     return course ? quiz : null
 }
 
+const NOT_ENROLLED_MESSAGE = "You must be enrolled in this course to take its quizzes"
+
+// Active or completed enrollments can take quizzes; suspended ones can't
+function isEnrolled(studentId, courseId) {
+    return Enrollment.exists({ studentId, courseId, status: { $in: ["active", "completed"] } })
+}
+
 // Loads a quiz for a student and checks they are enrolled (not suspended) in its course.
 // Returns the quiz, or sends the error response and returns null.
 async function findQuizForStudent(quizId, request, response, { withCorrectAnswers = false } = {}) {
@@ -106,16 +114,43 @@ async function findQuizForStudent(quizId, request, response, { withCorrectAnswer
         return null
     }
 
-    const enrolled = await Enrollment.exists({
-        studentId: request.user.userId,
-        courseId: quiz.courseId,
-        status: { $in: ["active", "completed"] },
-    })
-    if (!enrolled) {
-        response.status(403).json({ message: "You must be enrolled in this course to take its quizzes" })
+    if (!(await isEnrolled(request.user.userId, quiz.courseId))) {
+        response.status(403).json({ message: NOT_ENROLLED_MESSAGE })
         return null
     }
     return quiz
+}
+
+// The latest attempt per (quiz, student) for a course, optionally for one student.
+// Each row: { _id: { quizId, studentId }, latest: <attempt>, attemptCount }
+function latestAttemptsInCourse(courseId, studentId) {
+    const match = { courseId: new mongoose.Types.ObjectId(String(courseId)) }
+    if (studentId) match.studentId = new mongoose.Types.ObjectId(String(studentId))
+    return QuizAttempt.aggregate([
+        { $match: match },
+        { $sort: { createdAt: -1 } },
+        {
+            $group: {
+                _id: { quizId: "$quizId", studentId: "$studentId" },
+                latest: { $first: "$$ROOT" },
+                attemptCount: { $sum: 1 },
+            },
+        },
+    ])
+}
+
+// Short summary of a latest attempt (no answers), used in lists
+function attemptSummary(row) {
+    return {
+        attemptId: row.latest._id,
+        correctCount: row.latest.correctCount,
+        totalQuestions: row.latest.totalQuestions,
+        scorePercent: row.latest.scorePercent,
+        passingScore: row.latest.passingScore,
+        passed: row.latest.passed,
+        submittedAt: row.latest.createdAt,
+        attemptCount: row.attemptCount,
+    }
 }
 
 // The result + review a student sees after submitting (and when reopening it later)
@@ -231,6 +266,60 @@ const getLatestAttempts = asyncHandler(async (request, response) => {
     response.json(rows)
 })
 
+// GET /api/v1/quizzes/course/:courseId/students
+// Instructor view: every student enrolled in the course, with their latest attempt
+// on each quiz. Quizzes are listed oldest first (the order they were added).
+const getCourseStudents = asyncHandler(async (request, response) => {
+    const { courseId } = request.params
+
+    const course = await findOwnedCourse(courseId, request, response)
+    if (!course) return
+
+    const [quizzes, enrollments, latestRows] = await Promise.all([
+        Quiz.find({ courseId }).select("title passingScore questions createdAt").sort({ createdAt: 1 }).lean(),
+        Enrollment.find({ courseId }).populate("studentId", "name email").sort({ enrolledAt: -1 }).lean(),
+        latestAttemptsInCourse(course._id),
+    ])
+
+    // (studentId:quizId) -> latest attempt summary
+    const latestByStudentQuiz = new Map(
+        latestRows.map((row) => [`${row._id.studentId}:${row._id.quizId}`, attemptSummary(row)])
+    )
+
+    const seen = new Set()
+    const students = []
+    for (const enrollment of enrollments) {
+        const student = enrollment.studentId
+        // Skip accounts that were deleted, and any duplicate enrollment rows
+        if (!student || seen.has(String(student._id))) continue
+        seen.add(String(student._id))
+
+        students.push({
+            _id: student._id,
+            name: student.name,
+            email: student.email,
+            enrolledAt: enrollment.enrolledAt,
+            status: enrollment.status,
+            grades: quizzes
+                .map((quiz) => {
+                    const summary = latestByStudentQuiz.get(`${student._id}:${quiz._id}`)
+                    return summary ? { quizId: quiz._id, ...summary } : null
+                })
+                .filter(Boolean),
+        })
+    }
+
+    response.json({
+        quizzes: quizzes.map((quiz) => ({
+            _id: quiz._id,
+            title: quiz.title,
+            passingScore: quiz.passingScore,
+            totalQuestions: quiz.questions.length,
+        })),
+        students,
+    })
+})
+
 // PUT /api/v1/quizzes/:quizId
 // Replaces the title, passing score and the whole question list.
 const updateQuiz = asyncHandler(async (request, response) => {
@@ -259,6 +348,33 @@ const deleteQuiz = asyncHandler(async (request, response) => {
 })
 
 // --- student handlers ---
+
+// GET /api/v1/quizzes/course/:courseId/available
+// Enrolled student: the course's quizzes (oldest first, no questions) with their
+// latest attempt on each one, or null if they haven't taken it yet.
+const getAvailableQuizzes = asyncHandler(async (request, response) => {
+    const { courseId } = request.params
+    const studentId = request.user.userId
+
+    if (!(await isEnrolled(studentId, courseId))) {
+        return response.status(403).json({ message: NOT_ENROLLED_MESSAGE })
+    }
+
+    const [quizzes, latestRows] = await Promise.all([
+        Quiz.find({ courseId }).select("courseId title passingScore questions createdAt").sort({ createdAt: 1 }).lean(),
+        latestAttemptsInCourse(courseId, studentId),
+    ])
+    const latestByQuiz = new Map(latestRows.map((row) => [String(row._id.quizId), attemptSummary(row)]))
+
+    response.json(quizzes.map((quiz) => ({
+        _id: quiz._id,
+        courseId: quiz.courseId,
+        title: quiz.title,
+        passingScore: quiz.passingScore,
+        totalQuestions: quiz.questions.length,
+        latestAttempt: latestByQuiz.get(String(quiz._id)) || null,
+    })))
+})
 
 // GET /api/v1/quizzes/:quizId/take
 // Enrolled student: the questions and options to answer. Correct answers are never sent.
@@ -329,6 +445,8 @@ module.exports = {
     getLatestAttempts,
     updateQuiz,
     deleteQuiz,
+    getCourseStudents,
+    getAvailableQuizzes,
     getQuizForStudent,
     submitQuizAttempt,
     getAttemptForStudent,

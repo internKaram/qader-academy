@@ -1,18 +1,20 @@
 import { useEffect, useState } from "react"
-import { Link, useLocation, useParams } from "react-router-dom"
+import { Link, useLocation, useParams, useSearchParams } from "react-router-dom"
 import axios from "axios"
-import { ArrowLeft, Check, CheckCircle2, ChevronDown, ChevronUp, ListChecks, Pen, Plus, Users, X } from "lucide-react"
+import { ArrowLeft, CheckCircle2, ChevronDown, ChevronUp, ListChecks, Pen, Plus, Users } from "lucide-react"
 import { SiteChrome } from "../components/SiteChrome"
 import { Button, Spinner } from "../components/ui"
 import {
     cardClass, eyebrowClass, outlineButtonClass, pageTitleClass, pillBrandClass,
     pillDangerClass, pillNeutralClass, pillSuccessClass, primaryButtonClass,
 } from "../components/quiz/quizStyles"
+import { AnswerReview } from "../components/quiz/AnswerReview"
+import { CourseStudentsTable } from "../components/quiz/CourseStudentsTable"
 import { useAuth } from "../hooks/useAuth"
 import api from "../api/axios"
-import { getLatestAttempts, listQuizzesForCourse } from "../services/quizService"
+import { getCourseStudents, getLatestAttempts, listQuizzesForCourse } from "../services/quizService"
 import type { Course } from "../types/course"
-import type { LatestQuizAttempt, QuizAttemptAnswer, QuizWithStats } from "../types/quiz"
+import type { CourseStudentsReport, LatestQuizAttempt, QuizWithStats } from "../types/quiz"
 
 function formatDate(value: string) {
     return new Date(value).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })
@@ -23,53 +25,6 @@ function serverMessage(err: unknown, fallback: string) {
         return err.response.data.message
     }
     return fallback
-}
-
-// One question from a student's attempt: their pick vs. the correct answer
-function AnswerReview({ answer, number }: { answer: QuizAttemptAnswer; number: number }) {
-    const skipped = answer.selectedIndex === null
-    return (
-        <div className="rounded-[20px] border border-line bg-canvas p-4">
-            <div className="mb-2.5 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                    <span className={pillNeutralClass}>Question {number}</span>
-                    <span
-                        className={`grid size-5 place-items-center rounded-full ${answer.isCorrect ? "bg-success-light text-success" : "bg-danger-light text-danger"}`}
-                        aria-label={answer.isCorrect ? "Correct" : "Incorrect"}
-                    >
-                        {answer.isCorrect ? <Check className="size-3" strokeWidth={3} /> : <X className="size-3" strokeWidth={3} />}
-                    </span>
-                </div>
-                <span className="text-xs font-semibold text-ink-muted">{answer.isCorrect ? 1 : 0}/1 pt</span>
-            </div>
-            <p className="mb-3 text-sm font-bold text-ink">{answer.questionText}</p>
-            <div className="flex flex-col gap-2">
-                {answer.options.map((option, oIndex) => {
-                    const isCorrectOption = oIndex === answer.correctIndex
-                    const isPicked = oIndex === answer.selectedIndex
-                    let rowClass = "border-line bg-canvas"
-                    let label: string | null = null
-                    let labelClass = "text-ink-muted"
-                    if (isCorrectOption) {
-                        rowClass = "border-success bg-success-light"
-                        label = isPicked ? "Student's answer · Correct" : "Correct answer"
-                        labelClass = "text-success-dark"
-                    } else if (isPicked) {
-                        rowClass = "border-danger bg-danger-light"
-                        label = "Student's answer"
-                        labelClass = "text-danger-dark"
-                    }
-                    return (
-                        <div key={oIndex} className={`flex items-center justify-between gap-3 rounded-control border-[1.5px] px-3.5 py-2.5 ${rowClass}`}>
-                            <span className="text-[13px] text-ink">{option}</span>
-                            {label && <span className={`shrink-0 text-[11px] font-extrabold ${labelClass}`}>{label}</span>}
-                        </div>
-                    )
-                })}
-            </div>
-            {skipped && <p className="mt-2 text-xs font-semibold text-danger-dark">The student skipped this question.</p>}
-        </div>
-    )
 }
 
 // One student's latest attempt, with a toggle to see every answer
@@ -122,7 +77,7 @@ function AttemptRow({ attempt }: { attempt: LatestQuizAttempt }) {
                         Latest attempt · needed {attempt.passingScore}% to pass
                     </p>
                     {attempt.answers.map((answer, index) => (
-                        <AnswerReview key={index} answer={answer} number={index + 1} />
+                        <AnswerReview key={index} answer={answer} number={index + 1} viewer="instructor" />
                     ))}
                 </div>
             )}
@@ -230,6 +185,12 @@ function CourseQuizzesPage() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
+    // "Enrolled students" tab: loaded with the page so the tab can show the count
+    const [studentsReport, setStudentsReport] = useState<CourseStudentsReport | null>(null)
+    const [studentsError, setStudentsError] = useState<string | null>(null)
+    const [searchParams, setSearchParams] = useSearchParams()
+    const tab = searchParams.get("tab") === "students" ? "students" : "quizzes"
+
     useEffect(() => {
         if (!courseId || !user) return
         const fetchData = async () => {
@@ -240,7 +201,13 @@ function CourseQuizzesPage() {
                     return
                 }
                 setCourseTitle(courseResponse.data.title)
-                setQuizzes(await listQuizzesForCourse(courseId))
+                const [quizList] = await Promise.all([
+                    listQuizzesForCourse(courseId),
+                    getCourseStudents(courseId)
+                        .then(setStudentsReport)
+                        .catch((err) => setStudentsError(serverMessage(err, "Failed to load the enrolled students."))),
+                ])
+                setQuizzes(quizList)
             } catch (err) {
                 setError(serverMessage(err, "Failed to load quizzes for this course."))
             } finally {
@@ -286,7 +253,7 @@ function CourseQuizzesPage() {
                                 <span className={pillBrandClass}>{quizzes.length}</span>
                             </div>
                             <p className="text-[13px] font-semibold text-ink-muted">
-                                Edit your quizzes and see how students did on their latest attempts.
+                                Edit your quizzes, see who enrolled, and how students did on their latest attempts.
                             </p>
                         </div>
                         <Link to={newQuizPath} className={`${primaryButtonClass} shrink-0 self-start px-4 py-2.5 text-sm sm:self-auto`}>
@@ -302,20 +269,54 @@ function CourseQuizzesPage() {
                         </div>
                     )}
 
-                    {quizzes.length === 0 ? (
-                        <div className="rounded-card border-2 border-dashed border-line-strong bg-canvas-soft p-10 text-center">
-                            <h2 className="text-lg font-extrabold text-ink">No quizzes yet</h2>
-                            <p className="mt-1 text-sm text-ink-muted">Create the first quiz for {courseTitle}.</p>
-                            <Link to={newQuizPath} className={`${primaryButtonClass} mt-5 px-4 py-2.5 text-sm`}>
-                                <Plus className="size-4" aria-hidden="true" />
-                                Create Quiz
-                            </Link>
+                    <div role="tablist" aria-label="Course quizzes and students" className="mb-6 flex w-full max-w-md gap-1 rounded-[12px] bg-canvas-warm p-1">
+                        {([
+                            ["quizzes", `Quizzes (${quizzes.length})`],
+                            ["students", `Enrolled students${studentsReport ? ` (${studentsReport.students.length})` : ""}`],
+                        ] as const).map(([key, label]) => (
+                            <button
+                                key={key}
+                                type="button"
+                                role="tab"
+                                id={`tab-${key}`}
+                                aria-selected={tab === key}
+                                aria-controls={`panel-${key}`}
+                                onClick={() => setSearchParams(key === "students" ? { tab: "students" } : {}, { replace: true })}
+                                className={`flex-1 rounded-[10px] px-2.5 py-2 text-[13px] font-bold transition ${tab === key ? "bg-canvas text-ink shadow-[0_1px_3px_rgb(18_24_38_/_0.14)]" : "text-ink-muted hover:text-ink"}`}
+                            >
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {tab === "students" ? (
+                        <div role="tabpanel" id="panel-students" aria-labelledby="tab-students">
+                            {studentsError ? (
+                                <p className="text-sm font-semibold text-danger">{studentsError}</p>
+                            ) : studentsReport ? (
+                                <CourseStudentsTable report={studentsReport} />
+                            ) : (
+                                <div className="flex justify-center py-6"><Spinner label="Loading students" /></div>
+                            )}
                         </div>
                     ) : (
-                        <div className="space-y-4">
-                            {quizzes.map((quiz) => (
-                                <QuizCard key={quiz._id} quiz={quiz} courseId={courseId} />
-                            ))}
+                        <div role="tabpanel" id="panel-quizzes" aria-labelledby="tab-quizzes">
+                            {quizzes.length === 0 ? (
+                                <div className="rounded-card border-2 border-dashed border-line-strong bg-canvas-soft p-10 text-center">
+                                    <h2 className="text-lg font-extrabold text-ink">No quizzes yet</h2>
+                                    <p className="mt-1 text-sm text-ink-muted">Create the first quiz for {courseTitle}.</p>
+                                    <Link to={newQuizPath} className={`${primaryButtonClass} mt-5 px-4 py-2.5 text-sm`}>
+                                        <Plus className="size-4" aria-hidden="true" />
+                                        Create Quiz
+                                    </Link>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {quizzes.map((quiz) => (
+                                        <QuizCard key={quiz._id} quiz={quiz} courseId={courseId} />
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

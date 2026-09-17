@@ -20,12 +20,18 @@ router.route("/")
 router.route("/course/:courseId")
     .get(instructorOnly, quizController.courseIdParamValidator, validateRequest, quizController.getQuizzesByCourse)
 
+router.route("/course/:courseId/students")
+    .get(instructorOnly, quizController.courseIdParamValidator, validateRequest, quizController.getCourseStudents)
+
 router.route("/:quizId")
     .get(instructorOnly, quizController.quizIdValidator, validateRequest, quizController.getQuizById)
     .put(instructorOnly, quizController.updateQuizValidators, validateRequest, quizController.updateQuiz)
     .delete(instructorOnly, quizController.quizIdValidator, validateRequest, quizController.deleteQuiz)
 
 // --- student (must be enrolled in the quiz's course): take a quiz and see results ---
+
+router.route("/course/:courseId/available")
+    .get(studentOnly, quizController.courseIdParamValidator, validateRequest, quizController.getAvailableQuizzes)
 
 router.route("/:quizId/take")
     .get(studentOnly, quizController.quizIdValidator, validateRequest, quizController.getQuizForStudent)

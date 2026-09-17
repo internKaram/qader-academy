@@ -367,6 +367,65 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  /quizzes/course/{courseId}/students:
+    parameters:
+      - name: courseId
+        in: path
+        required: true
+        description: MongoDB ObjectId of the course
+        schema:
+          type: string
+    get:
+      tags: [Quizzes]
+      summary: Enrolled students and their latest quiz grades (instructor view)
+      description: >
+        Requires instructor or admin role. Only the owning instructor (or an admin) may read it.
+        Lists every student enrolled in the course (newest enrollment first) with their latest
+        attempt on each quiz. Quizzes are listed oldest first.
+      responses:
+        "200":
+          description: Quizzes and enrolled students with grades
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseStudentsReport"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /quizzes/course/{courseId}/available:
+    parameters:
+      - name: courseId
+        in: path
+        required: true
+        description: MongoDB ObjectId of the course
+        schema:
+          type: string
+    get:
+      tags: [Quizzes]
+      summary: A course's quizzes for an enrolled student
+      description: Requires student role and an active or completed enrollment. Quizzes oldest first, without questions, each with the student's own latest attempt (or null).
+      responses:
+        "200":
+          description: The course's quizzes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AvailableQuiz"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
   /quizzes/{quizId}:
     parameters:
       - $ref: "#/components/parameters/QuizId"
@@ -887,6 +946,90 @@ components:
           type: integer
         isCorrect:
           type: boolean
+
+    QuizAttemptSummary:
+      type: object
+      description: Short summary of a latest attempt (no answers)
+      properties:
+        attemptId:
+          type: string
+        correctCount:
+          type: integer
+        totalQuestions:
+          type: integer
+        scorePercent:
+          type: number
+        passingScore:
+          type: integer
+        passed:
+          type: boolean
+        submittedAt:
+          type: string
+          format: date-time
+        attemptCount:
+          type: integer
+
+    AvailableQuiz:
+      type: object
+      properties:
+        _id:
+          type: string
+        courseId:
+          type: string
+        title:
+          type: string
+        passingScore:
+          type: integer
+        totalQuestions:
+          type: integer
+        latestAttempt:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/QuizAttemptSummary"
+
+    CourseStudentsReport:
+      type: object
+      properties:
+        quizzes:
+          type: array
+          items:
+            type: object
+            properties:
+              _id:
+                type: string
+              title:
+                type: string
+              passingScore:
+                type: integer
+              totalQuestions:
+                type: integer
+        students:
+          type: array
+          items:
+            type: object
+            properties:
+              _id:
+                type: string
+              name:
+                type: string
+              email:
+                type: string
+              enrolledAt:
+                type: string
+                format: date-time
+              status:
+                type: string
+                enum: [active, completed, suspended]
+              grades:
+                type: array
+                description: Latest attempt on each quiz the student has taken
+                items:
+                  allOf:
+                    - $ref: "#/components/schemas/QuizAttemptSummary"
+                    - type: object
+                      properties:
+                        quizId:
+                          type: string
 
     StudentQuiz:
       type: object
